@@ -27,7 +27,7 @@ const themeScrollbar = ScrollbarThemeData(
   showTrackOnHover: true,
 );
 
-final themeDarkFull = ThemeData.from(
+final themeDataDark = ThemeData.from(
   colorScheme: colorSchemeDark,
   textTheme: themeTypography.white,
 ).copyWith(
@@ -37,7 +37,7 @@ final themeDarkFull = ThemeData.from(
   pageTransitionsTheme: themePageTransitions,
 );
 
-final themeLightFull = ThemeData.from(
+final themeDataLight = ThemeData.from(
   colorScheme: colorSchemeLight,
   textTheme: themeTypography.black,
 ).copyWith(

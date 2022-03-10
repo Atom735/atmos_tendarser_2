@@ -22,6 +22,7 @@ dependencies:
     git:
       url: git@github.com:Atom735/sqlite3.dart.git
       path: sqlite3
+  stream_channel: ^2.1.0
 
 dev_dependencies:
   atmos_lints: ^0.16.1
