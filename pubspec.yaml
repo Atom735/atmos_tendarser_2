@@ -1,0 +1,34 @@
+name: atmos_tendarser_2
+description: A new Flutter project.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.16.1 <3.0.0"
+
+dependencies:
+  atmos_binary_buffer: ^0.16.2
+  atmos_logger: ^0.16.1
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  html: ^0.15.0
+  intl: ^0.17.0
+  meta: ^1.7.0
+  source_span: ^1.8.1
+  sqlite3:
+    git:
+      url: git@github.com:Atom735/sqlite3.dart.git
+      path: sqlite3
+
+dev_dependencies:
+  atmos_lints: ^0.16.1
+  flutter_test:
+    sdk: flutter
+  test: ^1.19.5
+
+flutter:
+  uses-material-design: true
+  generate: true

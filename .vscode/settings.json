@@ -1,0 +1,15 @@
+{
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/.metadata": true,
+    "**/.packages": true,
+    "**/*.db": true,
+    "**/*.dll": true,
+    "**/android": true,
+    "**/build": true,
+    "**/ios": true,
+    "**/pubspec.lock": true,
+    "**/web": true,
+    "**/windows": true
+  }
+}
