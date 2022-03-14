@@ -12,10 +12,10 @@ List<TextSpan> highlightText(String text, TextStyle style) {
       break;
     }
     spans.add(TextSpan(text: text.substring(i0, i1)));
-    i1 += 1;
+    i1 += highlightTextBegin.length;
     final i2 = text.indexOf(highlightTextEnd, i1);
     spans.add(TextSpan(text: text.substring(i1, i2), style: style));
-    i0 = i2 + 1;
+    i0 = i2 + highlightTextEnd.length;
   }
   spans.add(TextSpan(text: text.substring(i0)));
   return spans;

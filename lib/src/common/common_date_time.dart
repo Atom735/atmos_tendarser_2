@@ -55,7 +55,7 @@ enum MyDateTimeQuality {
 
 /// Собственное представление даты/времени
 @immutable
-class MyDateTime implements Comparable {
+class MyDateTime implements Comparable<MyDateTime> {
   MyDateTime(this.dt, this.quality);
 
   /// Распаковывает время из целого числа
@@ -136,7 +136,7 @@ class MyDateTime implements Comparable {
   }
 
   @override
-  int compareTo(covariant MyDateTime other) {
+  int compareTo(MyDateTime other) {
     if (identical(this, other)) return 0;
     return dt.compareTo(other.dt);
   }

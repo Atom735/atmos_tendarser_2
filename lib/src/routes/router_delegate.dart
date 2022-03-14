@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/w_initializing_screen.dart';
@@ -85,7 +84,7 @@ class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
 
   @override
   Future<void> setRestoredRoutePath(CommonRouteInfo configuration) {
-    // TODO: implement setRestoredRoutePath
+    // TODO(Atom735): implement setRestoredRoutePath
     throw UnimplementedError();
   }
 

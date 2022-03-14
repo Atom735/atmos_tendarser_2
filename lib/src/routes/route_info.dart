@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 
 import '../widgets/w_home_screen.dart';
 import '../widgets/w_unknown_screen.dart';
+import '../widgets/w_updates_screen.dart';
 
 /// Информация о роутинге.
 ///
@@ -45,7 +46,7 @@ class RouteInfoHome extends CommonRouteInfo<void> {
 class RouteInfoUpdaters extends CommonRouteInfo<void> {
   @literal
   const RouteInfoUpdaters([this.parserName = ''])
-      : super(const WUnknownScreen());
+      : super(const WUpdatesScreen());
 
   final String parserName;
 

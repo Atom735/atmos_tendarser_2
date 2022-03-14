@@ -30,6 +30,11 @@ abstract class CommonDbColumn<S, D> {
 
   @override
   String toString() => toStringSQLite();
+
+  static String getSQLiteString(CommonDbColumn c) => c.toStringSQLite();
+  static String getName(CommonDbColumn c) => c.name;
+  static String getNameNewPrefix(CommonDbColumn c) => 'new.${c.name}';
+  static String getNameOldPrefix(CommonDbColumn c) => 'old.${c.name}';
 }
 
 @immutable
@@ -117,6 +122,21 @@ class DbColumnString extends CommonDbColumnText<String> {
 }
 
 @immutable
+class DbColumnStringFts extends CommonDbColumnText<String> {
+  @literal
+  const DbColumnStringFts(this.name);
+
+  @override
+  final String name;
+
+  @override
+  String decode(String value) => value;
+
+  @override
+  String encode(String value) => value;
+}
+
+@immutable
 class DbColumnBytes extends CommonDbColumnBlob<Uint8List> {
   @literal
   const DbColumnBytes([this.name = 'bytes']);
@@ -141,7 +161,7 @@ class DbColumnTimeStamp extends CommonDbColumnInteger<DateTime> {
 
   @override
   DateTime decode(int value) =>
-      DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true);
+      DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
 
   @override
   int encode(DateTime value) => value.toUtc().microsecondsSinceEpoch;

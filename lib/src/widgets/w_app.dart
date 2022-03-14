@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/app.dart';
 import '../common/common_misc.dart';
 import '../routes/route_parser.dart';
 import '../routes/router_delegate.dart';
@@ -20,6 +21,7 @@ class WAppState extends State<WApp> {
   void updateState() => setState(kVoidFunc);
 
   Future<void> init(Object? _) async {
+    await app.init();
     router.handleInitizlizngEnd();
   }
 
@@ -40,6 +42,7 @@ class WAppState extends State<WApp> {
   @override
   void dispose() {
     vnThemeModeDark.dispose();
+    app.dispose();
     super.dispose();
   }
 
