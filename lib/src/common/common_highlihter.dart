@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-const highlightTextBegin = '\u{1}';
-const highlightTextEnd = '\u{2}';
+import 'common_db_column.dart';
 
 List<TextSpan> highlightText(String text, TextStyle style) {
   final spans = <TextSpan>[];

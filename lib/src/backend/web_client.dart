@@ -14,9 +14,10 @@ import '../interfaces/i_fetching_params.dart';
 import '../interfaces/i_web_client.dart';
 
 class WebClient implements IWebClient {
+  WebClient(this.logger);
   final _tasks = <IWebClientTask>[];
 
-  Logger logger = const LoggerConsole();
+  final Logger logger;
 
   final _httpClient = HttpClient()
     ..autoUncompress = false

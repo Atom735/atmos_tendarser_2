@@ -13,17 +13,19 @@ import '../common/common_misc.dart';
 import '../common/common_stop_watch_ticks.dart';
 import '../common/common_web_constants.dart';
 import '../data/parsed_data.dart';
+import '../data/tender_data_etpgpb.dart';
 import '../interfaces/i_fetched_data.dart';
 import '../interfaces/i_fetching_params.dart';
 import '../interfaces/i_parsed_data.dart';
-import 'tender_data_etpgpb.dart';
+import '../interfaces/i_parser.dart';
 
 @immutable
-class ParserEtpGpb {
+class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
   @literal
   const ParserEtpGpb();
 
-  Future<bool> canParse(IFetchedData fetched) async {
+  @override
+  bool canParse(IFetchedData fetched) {
     if (fetched.type != WebContentType.html) return false;
     final bytes = fetched.bytes;
     if (bytes == null) {
@@ -72,7 +74,8 @@ class ParserEtpGpb {
     );
   }
 
-  Future<IParsedData<TenderDataEtpGpb>> parse(IFetchedData fetched) async {
+  @override
+  IParsedData<TenderDataEtpGpb> parse(IFetchedData fetched) {
     assert(fetched.bytes != null, 'No bytes');
     assert(fetched.params is IFetchingParamsWithData, 'No data in params');
     final sw = Stopwatch()..start();

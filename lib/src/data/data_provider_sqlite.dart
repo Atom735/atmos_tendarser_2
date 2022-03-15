@@ -4,7 +4,6 @@ import 'package:sqlite3/sqlite3.dart';
 
 import '../common/common_db_column.dart';
 import '../common/common_db_table.dart';
-import '../common/common_highlihter.dart';
 import '../interfaces/i_data_interval.dart';
 import '../interfaces/i_data_provider.dart';
 import '../interfaces/i_data_search_struct.dart';
@@ -48,6 +47,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   String get triggerNameFtsI => '${tableName}_ai';
   String get triggerNameFtsD => '${tableName}_ad';
   String get triggerNameFtsU => '${tableName}_au';
+  late final idName = columns.whereType<DbColumnId>().first.name;
 
   /// Создание таблицы
   void sqlCreateTable() {
@@ -166,14 +166,17 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   String _rtGen(int i) => _rt;
   String _tempsGen(int i) => Iterable.generate(i, _rtGen).join(', ');
 
+  late final _sqlSelectPrefix =
+      'SELECT ${columns.map(CommonDbColumn.getName).join(',')} FROM $tableName';
+
   /// Получить список записей по условию
   Iterable<O> sqlSelect([
     String condition = '',
     List<Object?> parameters = const [],
   ]) =>
-      sql
-          .select('SELECT * FROM $tableName $condition', parameters)
-          .map(sqlRowToData);
+      sql.select(' $_sqlSelectPrefix $condition', parameters).map(sqlRowToData);
+
+  late final _sqlInsertPrefix = 'INSERT INTO $tableName VALUES';
 
   /// Вставка записей
   void sqlInsert(Iterable<T> data) {
@@ -188,50 +191,47 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
     } else {
       final templates = _tempsGen(data.length);
       sql.execute(
-        'INSERT INTO $tableName VALUES $templates',
+        '$_sqlInsertPrefix $templates',
         data.expand(sqlDataToRow).toList(),
       );
     }
   }
 
+  late final _sqlUpdate1Prefix = 'UPDATE $tableName SET'
+      ' ${columns.map((e) => '${e.name} = ?').join(', ')} WHERE $idName = ?;';
+
+  late final _sqlUpdate2Prefix = '''
+      WITH ${tableName}_tmp(
+        ${columns.map(CommonDbColumn.getName).join(', ')}
+      ) AS ( VALUES''';
+  late final _sqlUpdate2Suffix = '''
+      )
+      UPDATE $tableName SET
+        ${columns.map((e) => '''
+          ${e.name} = (
+            SELECT ${e.name} FROM ${tableName}_tmp
+            WHERE $tableName.$idName = ${tableName}_tmp.$idName
+          )
+        ''').join(', ')}
+      WHERE $idName IN (SELECT $idName FROM $tableName.$idName)''';
+
   /// Обновление записей
-  void sqlUpdate(
-    Iterable<T> data, [
-    String columns = '',
-  ]) {
+  void sqlUpdate(Iterable<T> data) {
     if (data.isEmpty) return;
 
     // Записываем пачками по [insertChunkSize] элементов
     if (data.length > sqlInsertChunkSize) {
-      sqlUpdate(data.take(sqlInsertChunkSize), columns);
-      sqlUpdate(data.skip(sqlInsertChunkSize), columns);
+      sqlUpdate(data.take(sqlInsertChunkSize));
+      sqlUpdate(data.skip(sqlInsertChunkSize));
     } else if (data.length <= sqlUpdateChunkSize) {
-      final idName = this.columns.whereType<DbColumnId>().first.name;
       sql.execute(
-        '''
-          UPDATE $tableName SET
-            ${this.columns.map((e) => '${e.name} = ?').join(', ')}
-            WHERE $idName = ?;
-        ''' *
-            data.length,
+        _sqlUpdate1Prefix * data.length,
         data.expand(sqlDataToRowUpdate).toList(),
       );
     } else {
       final templates = _tempsGen(data.length);
-      final idName = this.columns.whereType<DbColumnId>().first.name;
       sql.execute(
-        '''
-          WITH ${tableName}_tmp(
-            ${this.columns.map(CommonDbColumn.getName).join(', ')}
-          ) AS ( VALUES $templates )
-          UPDATE $tableName SET
-            ${this.columns.map((e) => '''
-              ${e.name} = (
-                SELECT ${e.name} FROM ${tableName}_tmp
-                WHERE $tableName.$idName = ${tableName}_tmp.$idName
-              )
-            ''').join(', ')}
-          WHERE $idName IN (SELECT $idName FROM $tableName.$idName)''',
+        '$_sqlUpdate2Prefix $templates $_sqlUpdate2Suffix',
         data.expand(sqlDataToRow).toList(),
       );
     }
@@ -263,24 +263,20 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   // }
 
   /// Удаялет список записей по списку айди
-  ///
-  /// [cname] - указывает название колонки для выборки
-  /// [not] - флаг указывает исключение из списка
-  void sqlDeleteByIds(List<int> ids, {String cname = 'id', bool not = false}) {
+  /// - [not] - флаг указывает исключение из списка
+  void sqlDeleteByIds(List<int> ids, {bool not = false}) {
     if (ids.isEmpty) return;
     if (ids.length == 1) {
-      return sqlDelete('WHERE $cname${not ? '!=' : '='} ?', ids);
+      return sqlDelete('WHERE $idName ${not ? '!=' : '='} ?', ids);
     }
     final templates = Iterable.generate(ids.length, _ct).join(', ');
-    return sqlDelete('WHERE $cname ${not ? 'NOT ' : ''} IN ($templates)', ids);
+    return sqlDelete('WHERE $idName ${not ? 'NOT ' : ''} IN ($templates)', ids);
   }
 
   @override
   int getNewId() {
-    final res = sql
-        .select('SELECT seq FROM sqlite_sequence WHERE name = ?', [tableName]);
-    if (res.isEmpty) return 1;
-    return (res.first.columnAt(0) as int) + 1;
+    final res = sql.select('SELECT MAX($idName) FROM $tableName');
+    return (res.first.columnAt(0) as int?) ?? 0 + 1;
   }
 
   @override
@@ -294,16 +290,19 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   List<O> getByIds(List<int> ids, {bool not = false}) {
     if (ids.isEmpty) return [];
     if (ids.length == 1) {
-      return sqlSelect('WHERE rowid ${not ? '!=' : '='} ?', ids).toList();
+      return sqlSelect('WHERE $idName ${not ? '!=' : '='} ?', ids).toList();
     }
     final templates = Iterable.generate(ids.length, _ct).join(', ');
-    return sqlSelect('WHERE rowid ${not ? 'NOT' : ''} IN ($templates)', ids)
+    return sqlSelect('WHERE $idName ${not ? 'NOT' : ''} IN ($templates)', ids)
         .toList();
   }
 
   @override
   IDataInterval<O> getInterval(int offset, int length, [S? search]) {
     if (search == null) {
+      if (length == 0) {
+        return DataInterval(0, sqlSelect().toList());
+      }
       return DataInterval(
         offset,
         sqlSelect(
@@ -323,6 +322,9 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
     }
     final match = search.text;
     if (match == null || !haveFts) {
+      if (length == 0) {
+        return DataInterval(0, sqlSelect().toList());
+      }
       return DataInterval(
         offset,
         sqlSelect(
@@ -354,6 +356,23 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
         }
       }
       names = sb.join(', ');
+    }
+    if (length == 0) {
+      return DataInterval(
+        0,
+        sql
+            .select(
+              '''
+              SELECT $names FROM $tableNameFts
+              LEFT JOIN $tableName ON $tableNameFts.rowid = $tableName.rowid
+              WHERE $tableNameFts = ?
+              $order
+            ''',
+              [match],
+            )
+            .map(sqlRowToData)
+            .toList(),
+      );
     }
     return DataInterval(
       offset,

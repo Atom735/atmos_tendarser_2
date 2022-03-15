@@ -76,13 +76,13 @@ abstract class CommonDbColumnText<S> extends CommonDbColumn<S, String> {
 @immutable
 class DbColumnId extends CommonDbColumnInteger<int> {
   @literal
-  const DbColumnId([this.name = 'id']);
+  const DbColumnId([this.name = 'rowid']);
 
   @override
   final String name;
 
   @override
-  String get constraints => 'PRIMARY KEY ASC AUTOINCREMENT';
+  String get constraints => 'PRIMARY KEY ASC';
 
   @override
   int decode(int value) => value;
@@ -120,6 +120,9 @@ class DbColumnString extends CommonDbColumnText<String> {
   @override
   String encode(String value) => value;
 }
+
+const highlightTextBegin = '\u{1}';
+const highlightTextEnd = '\u{2}';
 
 @immutable
 class DbColumnStringFts extends CommonDbColumnText<String> {

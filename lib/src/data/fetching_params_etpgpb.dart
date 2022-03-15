@@ -1,6 +1,6 @@
 import '../common/common_web_constants.dart';
-import '../data/fetching_params.dart';
 import '../interfaces/i_fetching_params.dart';
+import 'fetching_params.dart';
 
 const IFetchingParams kFetchingParamsEtpGpb = FetchingParams(
   1,
