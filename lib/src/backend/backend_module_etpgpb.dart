@@ -63,7 +63,11 @@ class BackendModuleEtpGpb {
     await dpUpdateStates.init();
     final datas = dpUpdaters
         .sqlSelect('WHERE statusCode < ${UpdaterStateStatus.done.index}');
-    updates.addAll(datas.map((e) => UpdaterEtpGpb(this, e)..run()));
+    updates.addAll(datas.map(
+      (e) => UpdaterEtpGpb(this, e)
+        ..run()
+        ..updates.listen(_updaterStateUpdate),
+    ));
   }
 
   Future<void> dispose() async {

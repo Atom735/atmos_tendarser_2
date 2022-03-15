@@ -42,7 +42,6 @@ class UpdaterEtpGpb extends UpdaterDataEtpGpb {
           return;
         }
         await step();
-        await Future.delayed(const Duration(milliseconds: 20));
       } while (next());
       status(UpdaterStateStatus.done);
       _doneCompleter.complete();
