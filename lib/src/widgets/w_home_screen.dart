@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../routes/route_info.dart';
-import '../routes/router_interface.dart';
 import 'w_siwtch_theme_mode_button.dart';
+import 'wp_app.dart';
 
 class WHomeScreen extends StatelessWidget {
   const WHomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final router = IRouter.of(context);
+    final router = WpApp.of(context).router;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Домашняя страница'),

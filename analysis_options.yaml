@@ -1,1 +1,3 @@
 include: package:atmos_lints/lints.yaml
+analyzer:
+  exclude: [.req/**]

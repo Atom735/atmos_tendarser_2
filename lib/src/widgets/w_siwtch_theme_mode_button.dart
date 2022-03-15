@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../common/common_misc.dart';
-import 'w_app.dart';
+import 'wm_app.dart';
+import 'wm_misc.dart';
 
 class WSwitchThemeModeButton extends StatefulWidget {
   const WSwitchThemeModeButton({Key? key}) : super(key: key);
@@ -10,18 +10,14 @@ class WSwitchThemeModeButton extends StatefulWidget {
   State<WSwitchThemeModeButton> createState() => _WSwitchThemeModeButtonState();
 }
 
-class _WSwitchThemeModeButtonState extends State<WSwitchThemeModeButton> {
-  void updateState() => setState(kVoidFunc);
-
+class _WSwitchThemeModeButtonState extends State<WSwitchThemeModeButton>
+    with WmApp, WmMisc {
   ValueNotifier<bool>? vnThemeModeDark;
+
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    vnThemeModeDark?.removeListener(updateState);
-    vnThemeModeDark = context
-        .findAncestorStateOfType<WAppState>()!
-        .vnThemeModeDark
-      ..addListener(updateState);
+  void onAppGetted() {
+    super.onAppGetted();
+    vnThemeModeDark = app.vnThemeModeDark..addListener(updateState);
   }
 
   @override

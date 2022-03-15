@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../frontend/frontend_app.dart';
+import '../frontend/frontend_web_socket_connection.dart';
+import '../interfaces/i_router.dart';
+import '../widgets/w_connecting_screen.dart';
 import '../widgets/w_initializing_screen.dart';
 import 'route_info.dart';
-import 'router_interface.dart';
 
 class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
     with
@@ -12,8 +15,14 @@ class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
         PopNavigatorRouterDelegateMixin
     implements
         IRouter {
+  MyRouterDelegate(this.app) {
+    app.connection.updates.listen((event) => notifyListeners());
+  }
+
   static MyRouterDelegate of(BuildContext context) =>
       Router.of(context).routerDelegate as MyRouterDelegate;
+
+  final FrontendApp app;
 
   @override
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -25,17 +34,15 @@ class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodySmall;
+
     Widget result = Navigator(
       key: navigatorKey,
       pages: initialized
-          ? routeStack.toList()
-          : const [
-              MaterialPage(
-                child: WInitializingScreen(),
-                name: '#initializing-screen',
-                restorationId: '#initializing-screen',
-              ),
-            ],
+          ? app.connection.statusCode ==
+                  FrontendWebSocketConnectionStatus.connected
+              ? routeStack.toList()
+              : const [MaterialPage(child: WConnectingScreen())]
+          : const [MaterialPage(child: WInitializingScreen())],
       onPopPage: onPopPage,
       restorationScopeId: 'navigator',
     );

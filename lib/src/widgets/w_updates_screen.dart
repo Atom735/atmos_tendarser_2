@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
+/*
 import '../app/app.dart';
 import '../common/common_misc.dart';
 import '../parser_etpgpb/updater_etpgpb.dart';
@@ -192,3 +192,4 @@ class _LinearProgressIndicatorPainter extends CustomPainter {
       oldPainter.color2 != color2 ||
       oldPainter.backgroundColor != backgroundColor;
 }
+*/

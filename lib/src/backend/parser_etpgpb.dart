@@ -310,7 +310,7 @@ class _EtpGpbProcedureVisitor extends TreeVisitor {
         return visitChildren(node);
       case 'procedure__detailsSum procedure__detailsSum--unknown':
         final txt = node.text;
-        if (txt == 'Цена не указана') {
+        if (txt == 'Цена не указана' || txt == '0 ₽') {
           sum = 0;
         } else {
           throw Exception();

@@ -15,29 +15,31 @@ class UpdaterEtpGpb extends UpdaterDataEtpGpb {
   UpdaterEtpGpb(this.module, UpdaterDataEtpGpb v) : super(v.settings, v.state);
 
   final BackendModuleEtpGpb module;
-  final sc = StreamController<UpdaterEtpGpb>.broadcast(sync: true);
 
-  Stream<UpdaterEtpGpb> get updates => sc.stream;
+  Stream<UpdaterEtpGpb> get updates => _sc.stream;
+  Future<void> get done => _doneCompleter.future;
 
   static const parser = ParserEtpGpb();
 
-  Completer<void> pauseCompleter = Completer<void>.sync();
-  Future<void> get done => _doneCompleter.future;
+  Completer<void> _pauseCompleter = Completer<void>.sync();
   final _doneCompleter = Completer<void>();
+  final _sc = StreamController<UpdaterEtpGpb>.broadcast(sync: true);
+
+  void pause() => _pauseCompleter.complete();
 
   void status(UpdaterStateStatus code, [String message = '']) {
     state
       ..timestamp = DateTime.now()
       ..statusCode = code
       ..statusMessage = message;
-    sc.add(this);
+    _sc.add(this);
   }
 
   Future<void> run() async {
     try {
-      pauseCompleter = Completer<void>.sync();
+      _pauseCompleter = Completer<void>.sync();
       do {
-        if (pauseCompleter.isCompleted) {
+        if (_pauseCompleter.isCompleted) {
           status(UpdaterStateStatus.paused);
           return;
         }
@@ -101,7 +103,7 @@ class UpdaterEtpGpb extends UpdaterDataEtpGpb {
   }
 
   Future<void> dispose() {
-    pauseCompleter.complete();
-    return sc.close();
+    _pauseCompleter.complete();
+    return _sc.close();
   }
 }

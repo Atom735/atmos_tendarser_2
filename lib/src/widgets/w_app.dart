@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../app/app.dart';
-import '../common/common_misc.dart';
 import '../routes/route_parser.dart';
 import '../routes/router_delegate.dart';
 import '../theme/theme_themes.dart';
+import 'wm_app.dart';
+import 'wm_misc.dart';
 
 class WApp extends StatefulWidget {
   const WApp({Key? key}) : super(key: key);
@@ -13,35 +13,15 @@ class WApp extends StatefulWidget {
   WAppState createState() => WAppState();
 }
 
-class WAppState extends State<WApp> {
-  final vnThemeModeDark = ValueNotifier(true);
-
-  final router = MyRouterDelegate();
-
-  void updateState() => setState(kVoidFunc);
-
-  Future<void> init(Object? _) async {
-    await app.init();
-    router.handleInitizlizngEnd();
-  }
-
+class WAppState extends State<WApp> with WmApp, WmMisc {
   @override
-  void initState() {
-    super.initState();
-    vnThemeModeDark.addListener(updateState);
-
-    var f = Future.value();
-    assert(() {
-      f = Future.delayed(const Duration(seconds: 3));
-      return true;
-    }(), 'set debug delay for initializing');
-
-    f.then(init);
+  void onAppGetted() {
+    super.onAppGetted();
+    app.vnThemeModeDark.addListener(updateState);
   }
 
   @override
   void dispose() {
-    vnThemeModeDark.dispose();
     app.dispose();
     super.dispose();
   }
@@ -50,14 +30,14 @@ class WAppState extends State<WApp> {
   Widget build(BuildContext context) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
         locale: const Locale('ru'),
-        color: (vnThemeModeDark.value ? themeDataDark : themeDataLight)
+        color: (app.vnThemeModeDark.value ? themeDataDark : themeDataLight)
             .colorScheme
             .primary,
         theme: themeDataLight,
         darkTheme: themeDataDark,
-        themeMode: vnThemeModeDark.value ? ThemeMode.dark : ThemeMode.light,
+        themeMode: app.vnThemeModeDark.value ? ThemeMode.dark : ThemeMode.light,
         routeInformationParser: const RouteParser(),
-        routerDelegate: router,
+        routerDelegate: router as MyRouterDelegate,
         restorationScopeId: 'tendarser',
         title: 'Atmos Tendarser',
       );
