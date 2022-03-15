@@ -11,6 +11,9 @@ import 'i_data_search_struct.dart';
 abstract class IDataProvider<T, O extends T, S extends IDataSearchStruct> {
   IDataProvider._();
 
+  /// Возвращает дату последней записи
+  FutureOr<DateTime> getLastTimestamp();
+
   /// Возвращает уникальный айди рва
   FutureOr<int> getNewId();
 
@@ -67,6 +70,8 @@ abstract class IDataProvider<T, O extends T, S extends IDataSearchStruct> {
 abstract class IDataProviderSync<T, O extends T, S extends IDataSearchStruct>
     implements IDataProvider<T, O, S> {
   @override
+  DateTime getLastTimestamp();
+  @override
   int getNewId();
   @override
   O? getById(int id);
@@ -93,6 +98,8 @@ abstract class IDataProviderSync<T, O extends T, S extends IDataSearchStruct>
 /// Интерфейс асинхронного провайдера данных (например для работы через сеть)
 abstract class IDataProviderAsync<T, O extends T, S extends IDataSearchStruct>
     implements IDataProvider<T, O, S> {
+  @override
+  Future<DateTime> getLastTimestamp();
   @override
   Future<int> getNewId();
   @override

@@ -13,6 +13,9 @@ class DbEtpGpbTenderDataTable
   const DbEtpGpbTenderDataTable();
 
   @override
+  bool get isSubTable => false;
+
+  @override
   String get name => 'EtpGpbTenders';
   @override
   List<CommonDbColumn> get columns => const [

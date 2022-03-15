@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../common/common_date_time.dart';
 import '../data/data_provider_sqlite.dart';
 import '../data/tender_data_etpgpb.dart';
@@ -5,6 +7,8 @@ import '../data/tender_data_table_eptgbp.dart';
 import '../data/updater_data_etpgpb.dart';
 import '../data/updater_data_table_etpgpb.dart';
 import '../interfaces/i_data_search_struct.dart';
+import '../interfaces/i_msg.dart';
+import '../messages/msg_sync_request.dart';
 import 'backend_app.dart';
 import 'updater_etpgpb.dart';
 
@@ -77,5 +81,12 @@ class BackendModuleEtpGpb {
     await dpUpdateStates.dispose();
     await dpUpdaters.dispose();
     await dpTenders.dispose();
+  }
+
+  void startSync(MsgSyncRequest msg, StreamSink<IMsg> sink) async* {
+    final tsTenders = msg.timestamps[dpTenders.tableName];
+    if (tsTenders != null) {
+      dpTenders.getInterval(offset, length);
+    }
   }
 }

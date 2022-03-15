@@ -51,11 +51,22 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
 
   /// Создание таблицы
   void sqlCreateTable() {
+    if (dbTable.isSubTable) throw Exception('Readonly table');
     sql.execute('''
       CREATE TABLE IF NOT EXISTS $tableName(
         ${columns.map(CommonDbColumn.getSQLiteString).join(', ')}
       )
     ''');
+
+    final indexes = columns.where(CommonDbColumn.filterIndexed).toList();
+    if (indexes.isNotEmpty) {
+      for (final column in indexes) {
+        sql.execute('''
+          CREATE INDEX IF NOT EXISTS ${tableName}_i_${column.name}
+          ON $tableName(${column.name})
+        ''');
+      }
+    }
     if (haveFts) {
       sql.execute('''
       CREATE VIRTUAL TABLE IF NOT EXISTS $tableNameFts USING fts5(
@@ -107,6 +118,16 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
 
   /// Удаление таблицы
   void sqlDropTable() {
+    if (dbTable.isSubTable) throw Exception('Readonly table');
+
+    final indexes = columns.where(CommonDbColumn.filterIndexed).toList();
+    if (indexes.isNotEmpty) {
+      for (final column in indexes) {
+        sql.execute('''
+          DROP INDEX IF EXISTS ${tableName}_i_${column.name}
+        ''');
+      }
+    }
     if (haveFts) {
       sql.execute('''
         DROP TRIGGER IF EXISTS $triggerNameFtsU;
@@ -274,6 +295,13 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   }
 
   @override
+  DateTime getLastTimestamp() {
+    final timestamp = columns.whereType<DbColumnTimeStamp>().first;
+    final res = sql.select('SELECT MAX(${timestamp.name}) FROM $tableName');
+    return timestamp.decode((res.first.columnAt(0) as int?) ?? 0);
+  }
+
+  @override
   int getNewId() {
     final res = sql.select('SELECT MAX($idName) FROM $tableName');
     return (res.first.columnAt(0) as int?) ?? 0 + 1;
@@ -295,6 +323,15 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
     final templates = Iterable.generate(ids.length, _ct).join(', ');
     return sqlSelect('WHERE $idName ${not ? 'NOT' : ''} IN ($templates)', ids)
         .toList();
+  }
+
+  @override
+  IDataInterval<O> getIntervalSync(int offset, int length, DateTime timestamp) {
+    final column = columns.whereType<DbColumnTimeStamp>().first;
+    final result = sqlSelect(
+        'WHERE ${column.name} >= ? ORDER BY ${column.name} ASC LIMIT ?, ?',
+        [column.encode(timestamp), offset, length]).toList();
+    return DataInterval(offset, result);
   }
 
   @override

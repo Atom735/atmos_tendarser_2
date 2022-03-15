@@ -35,6 +35,8 @@ abstract class CommonDbColumn<S, D> {
   static String getName(CommonDbColumn c) => c.name;
   static String getNameNewPrefix(CommonDbColumn c) => 'new.${c.name}';
   static String getNameOldPrefix(CommonDbColumn c) => 'old.${c.name}';
+  static bool filterIndexed(CommonDbColumn c) =>
+      c is CommonDbColumnInteger && c.indexed;
 }
 
 @immutable
@@ -47,6 +49,8 @@ abstract class CommonDbColumnInteger<S> extends CommonDbColumn<S, int> {
 
   @override
   String get constraints => 'NOT NULL';
+
+  bool get indexed => false;
 }
 
 @immutable
@@ -168,6 +172,9 @@ class DbColumnTimeStamp extends CommonDbColumnInteger<DateTime> {
 
   @override
   int encode(DateTime value) => value.toUtc().microsecondsSinceEpoch;
+
+  @override
+  bool get indexed => true;
 }
 
 @immutable

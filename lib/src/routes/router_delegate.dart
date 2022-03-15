@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../frontend/frontend_app.dart';
-import '../frontend/frontend_web_socket_connection.dart';
+import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_router.dart';
 import '../widgets/w_connecting_screen.dart';
 import '../widgets/w_initializing_screen.dart';
@@ -16,7 +16,7 @@ class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
     implements
         IRouter {
   MyRouterDelegate(this.app) {
-    app.connection.updates.listen((event) => notifyListeners());
+    app.connection.statusUpdates.listen((event) => notifyListeners());
   }
 
   static MyRouterDelegate of(BuildContext context) =>
@@ -38,8 +38,7 @@ class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
     Widget result = Navigator(
       key: navigatorKey,
       pages: initialized
-          ? app.connection.statusCode ==
-                  FrontendWebSocketConnectionStatus.connected
+          ? app.connection.statusCode == ConnectionStatus.connected
               ? routeStack.toList()
               : const [MaterialPage(child: WConnectingScreen())]
           : const [MaterialPage(child: WInitializingScreen())],

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:yaml/yaml.dart';
 
+import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_router.dart';
 import '../routes/router_delegate.dart';
 import 'frontend_web_socket_connection.dart';
@@ -23,8 +24,7 @@ class FrontendApp {
   late final IRouter router = MyRouterDelegate(this);
   final vnThemeModeDark = ValueNotifier(true);
   late String serverAdress;
-  late final FrontendWebSocketConnection connection =
-      FrontendWebSocketConnection(this);
+  late final IMsgConnection connection = FrontendWebSocketConnection(this);
 
   final _settingFile = File('frontend.settings.yaml');
   late StreamSubscription<FileSystemEvent> _settingFileSS;
@@ -59,6 +59,7 @@ class FrontendApp {
   Future<void> dispose() async {
     await _settingFileSS.cancel();
     connection.close();
+    await (connection as FrontendWebSocketConnection).sc.close();
     vnThemeModeDark.dispose();
     (router as MyRouterDelegate).dispose();
     logger.info('Disposed');

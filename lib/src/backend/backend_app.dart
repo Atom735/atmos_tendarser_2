@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:atmos_logger/atmos_logger_io.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../interfaces/i_msg.dart';
 import '../interfaces/i_web_client.dart';
+import '../messages/msg_sync_request.dart';
 import 'backend_module_etpgpb.dart';
 import 'backend_web_socket_connection.dart';
 import 'web_client.dart';
@@ -28,10 +31,6 @@ class BackendApp {
     if (WebSocketTransformer.isUpgradeRequest(httpRequest)) {
       // ignore: close_sinks
       final socket = await WebSocketTransformer.upgrade(httpRequest);
-      logger.debug(
-        'Server new WebSocket request',
-        'WebSocket[${socket.hashCode.toRadixString(16)}]',
-      );
       connections.add(BackendWebSocketConnection(this, socket));
     } else {
       logger.debug('Server new HTTP request');
@@ -76,5 +75,9 @@ class BackendApp {
     await pEtpGpb.dispose();
     await webClient.dispose();
     logger.info('Modules disposed');
+  }
+
+  void startSync(MsgSyncRequest msg, StreamSink<IMsg> sink) {
+    pEtpGpb.startSync(msg, sink);
   }
 }

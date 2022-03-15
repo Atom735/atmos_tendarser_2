@@ -6,6 +6,7 @@ import '../data/tender_data_table_eptgbp.dart';
 import '../data/updater_data_etpgpb.dart';
 import '../data/updater_data_table_etpgpb.dart';
 import '../interfaces/i_data_search_struct.dart';
+import '../messages/msg_sync_request.dart';
 import 'frontend_app.dart';
 
 class FrontendModuleEtpGpb {
@@ -28,6 +29,14 @@ class FrontendModuleEtpGpb {
       IDataSearchStruct>(app.db, const DbEtpGpbUpdaterDataStateTable());
 
   void spawnNewUpdater(MyDateTime start, MyDateTime end) {}
+
+  Future<void> sync() async {
+    await for (final response
+        in app.connection.openStream(MsgSyncRequest(app.connection.msgId, {
+      dpTenders.tableName: dpTenders.getLastTimestamp(),
+      dpUpdaters.tableName: dpUpdaters.getLastTimestamp(),
+    }))) {}
+  }
 
   Future<void> init() async {
     await dpTenders.init();

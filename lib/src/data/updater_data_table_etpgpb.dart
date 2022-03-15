@@ -12,6 +12,9 @@ class DbEtpGpbUpdaterDataTable
   const DbEtpGpbUpdaterDataTable();
 
   @override
+  bool get isSubTable => false;
+
+  @override
   String get name => 'EtpGpbUpdaters';
 
   @override
@@ -65,6 +68,9 @@ class DbEtpGpbUpdaterDataStateTable
     extends CommonDbTable<UpdaterDataStateEtpGpb, UpdaterDataStateEtpGpb> {
   @literal
   const DbEtpGpbUpdaterDataStateTable();
+
+  @override
+  bool get isSubTable => true;
 
   @override
   String get name => const DbEtpGpbUpdaterDataTable().name;

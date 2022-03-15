@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../frontend/frontend_web_socket_connection.dart';
+import '../interfaces/i_msg_connection.dart';
 import 'w_siwtch_theme_mode_button.dart';
 import 'wm_app.dart';
 import 'wm_misc.dart';
@@ -21,7 +21,7 @@ class _WConnectingScreenState extends State<WConnectingScreen>
   @override
   void onAppGetted() {
     super.onAppGetted();
-    ss = app.connection.updates.listen(updateState);
+    ss = app.connection.statusUpdates.listen(updateState);
   }
 
   @override
@@ -33,7 +33,7 @@ class _WConnectingScreenState extends State<WConnectingScreen>
   @override
   Widget build(BuildContext context) {
     final state = app.connection.statusCode;
-    if (state == FrontendWebSocketConnectionStatus.error) {
+    if (state == ConnectionStatus.error) {
       return Scaffold(
         backgroundColor: theme.colorScheme.error,
         appBar: AppBar(
@@ -79,7 +79,7 @@ class _WConnectingScreenState extends State<WConnectingScreen>
       );
     }
 
-    if (state == FrontendWebSocketConnectionStatus.unconnected) {
+    if (state == ConnectionStatus.unconnected) {
       return Scaffold(
         appBar: AppBar(
           actions: const [WSwitchThemeModeButton()],
@@ -130,7 +130,7 @@ class _WConnectingScreenState extends State<WConnectingScreen>
                   child: CircularProgressIndicator(strokeWidth: 8),
                 ),
                 Text(
-                  'Подключение к [${app.connection.serverAdress}]...',
+                  'Подключение к [${app.connection.adress}]...',
                   style: Theme.of(context).typography.englishLike.displayLarge,
                 ),
               ],

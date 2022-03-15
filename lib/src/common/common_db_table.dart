@@ -10,6 +10,8 @@ abstract class CommonDbTable<T, O extends T> {
   @literal
   const CommonDbTable();
 
+  bool get isSubTable;
+
   /// Название таблицы
   String get name;
 
