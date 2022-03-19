@@ -42,12 +42,12 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
 
   late final haveFts = columnsFts.isNotEmpty;
 
-  String get tableName => dbTable.name;
+  String get tableName => dbTable.value;
   String get tableNameFts => '${tableName}_idx';
   String get triggerNameFtsI => '${tableName}_ai';
   String get triggerNameFtsD => '${tableName}_ad';
   String get triggerNameFtsU => '${tableName}_au';
-  late final idName = columns.whereType<DbColumnId>().first.name;
+  late final idName = columns.whereType<DbColumnId>().first.value;
 
   /// Создание таблицы
   void sqlCreateTable() {
@@ -62,8 +62,8 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
     if (indexes.isNotEmpty) {
       for (final column in indexes) {
         sql.execute('''
-          CREATE INDEX IF NOT EXISTS ${tableName}_i_${column.name}
-          ON $tableName(${column.name})
+          CREATE INDEX IF NOT EXISTS ${tableName}_i_${column.value}
+          ON $tableName(${column.value})
         ''');
       }
     }
@@ -124,7 +124,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
     if (indexes.isNotEmpty) {
       for (final column in indexes) {
         sql.execute('''
-          DROP INDEX IF EXISTS ${tableName}_i_${column.name}
+          DROP INDEX IF EXISTS ${tableName}_i_${column.value}
         ''');
       }
     }
@@ -178,7 +178,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   /// ColumnTemplate, Шаблок для заполнения одного значения
   static String _ct<T>(T column) => '?';
 
-  String get sqlColumnNames => columns.map((e) => e.name).join(',');
+  String get sqlColumnNames => columns.map((e) => e.value).join(',');
 
   int get sqlColumnsCount => columns.length;
 
@@ -219,7 +219,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   }
 
   late final _sqlUpdate1Prefix = 'UPDATE $tableName SET'
-      ' ${columns.map((e) => '${e.name} = ?').join(', ')} WHERE $idName = ?;';
+      ' ${columns.map((e) => '${e.value} = ?').join(', ')} WHERE $idName = ?;';
 
   late final _sqlUpdate2Prefix = '''
       WITH ${tableName}_tmp(
@@ -229,8 +229,8 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
       )
       UPDATE $tableName SET
         ${columns.map((e) => '''
-          ${e.name} = (
-            SELECT ${e.name} FROM ${tableName}_tmp
+          ${e.value} = (
+            SELECT ${e.value} FROM ${tableName}_tmp
             WHERE $tableName.$idName = ${tableName}_tmp.$idName
           )
         ''').join(', ')}
@@ -297,7 +297,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   @override
   DateTime getLastTimestamp() {
     final timestamp = columns.whereType<DbColumnTimeStamp>().first;
-    final res = sql.select('SELECT MAX(${timestamp.name}) FROM $tableName');
+    final res = sql.select('SELECT MAX(${timestamp.value}) FROM $tableName');
     return timestamp.decode((res.first.columnAt(0) as int?) ?? 0);
   }
 
@@ -329,7 +329,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
   IDataInterval<O> getIntervalSync(int offset, int length, DateTime timestamp) {
     final column = columns.whereType<DbColumnTimeStamp>().first;
     final result = sqlSelect(
-        'WHERE ${column.name} >= ? ORDER BY ${column.name} ASC LIMIT ?, ?',
+        'WHERE ${column.value} >= ? ORDER BY ${column.value} ASC LIMIT ?, ?',
         [column.encode(timestamp), offset, length]).toList();
     return DataInterval(offset, result);
   }
@@ -350,7 +350,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
     }
     var order = '';
     if (search.orderColumn >= 0 && search.orderColumn < columns.length) {
-      order = 'ORDER BY $tableName.${columns[search.orderColumn].name}';
+      order = 'ORDER BY $tableName.${columns[search.orderColumn].value}';
       if (search.orderAsc) {
         order = '$order ASC';
       } else {
@@ -389,7 +389,7 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
           sb.add('''highlight($tableNameFts, $i, '$i0', '$i1')''');
           i++;
         } else {
-          sb.add('''$tableName.${column.name}''');
+          sb.add('''$tableName.${column.value}''');
         }
       }
       names = sb.join(', ');
@@ -489,6 +489,18 @@ class DataProviderSqlite<T, O extends T, S extends IDataSearchStruct>
           'SELECT COUNT(*) FROM $tableNameFts WHERE $tableNameFts = ?',
           [search.text!],
         )
+        .first
+        .columnAt(0);
+  }
+
+  @override
+  int lengthSync(DateTime timestamp) {
+    final column = columns.whereType<DbColumnTimeStamp>().first;
+    return sql
+        .select(
+            'SELECT COUNT(*) FROM $tableName '
+            'WHERE ${column.value} >= ? ORDER BY ${column.value} ASC',
+            [column.encode(timestamp)])
         .first
         .columnAt(0);
   }

@@ -5,6 +5,7 @@ exports
 *.g.dart
 *.g.db
 *.db
+*.db-journal
 
 # Miscellaneous
 *.class

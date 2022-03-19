@@ -1,13 +1,12 @@
 import 'package:meta/meta.dart';
 
 import '../common/common_date_time.dart';
-
-const kTenderEtpGpbOffset = 1 << 32;
-const kTenderEtpGpbLimit = 1 << 32;
+import 'dto_company.dart';
+import 'dto_string.dart';
 
 @immutable
-class TenderDataEtpGpb {
-  const TenderDataEtpGpb(
+class DtoTenderDataEtpGpb {
+  const DtoTenderDataEtpGpb(
     this.id,
     this.timestamp,
     this.link,
@@ -25,9 +24,9 @@ class TenderDataEtpGpb {
     this.regions,
     this.auctionSections,
     this.props,
-  ) : assert(id >= 0 && id < kTenderEtpGpbLimit, 'invalidate id');
+  );
 
-  static int getId(TenderDataEtpGpb e) => e.id;
+  static int getId(DtoTenderDataEtpGpb e) => e.id;
 
   /// Уникальный айди тендера в БД
   final int id;
@@ -79,4 +78,25 @@ class TenderDataEtpGpb {
 
   /// Параметры
   final Set<String> props;
+
+  static Iterable<DtoString> getProps(DtoTenderDataEtpGpb e) =>
+      e.auctionSections
+          .map(DtoString.value)
+          .followedBy(e.props.map(DtoString.value))
+          .followedBy([DtoString.value(e.auctionType)]);
+
+  static Set<DtoString> getPropsAll(List<DtoTenderDataEtpGpb> items) =>
+      DtoString.createSet()..addAll(items.expand(getProps));
+
+  static Iterable<DtoString> getRegions(DtoTenderDataEtpGpb e) =>
+      e.regions.map(DtoString.value);
+
+  static Set<DtoString> getRegionsAll(List<DtoTenderDataEtpGpb> items) =>
+      DtoString.createSet()..addAll(items.expand(getRegions));
+
+  static DtoCompany getCompany(DtoTenderDataEtpGpb e) =>
+      DtoCompany(0, e.organizer, e.organizerLogo);
+
+  static Set<DtoCompany> getCompaniesAll(List<DtoTenderDataEtpGpb> items) =>
+      DtoCompany.createSet()..addAll(items.map(getCompany));
 }

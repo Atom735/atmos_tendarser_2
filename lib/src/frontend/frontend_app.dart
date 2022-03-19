@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:atmos_logger/atmos_logger_io.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sqlite3/sqlite3.dart';
 import 'package:yaml/yaml.dart';
 
+import '../database/database_app_client.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_router.dart';
 import '../routes/router_delegate.dart';
@@ -16,9 +16,7 @@ class FrontendApp {
   /// Версия приложения
   int get version => 1;
 
-  final db = sqlite3.open('frontend.db')
-    ..execute('PRAGMA JOURNAL_MODE=OFF')
-    ..execute('PRAGMA SYNCHRONOUS=OFF');
+  final db = DatabaseAppClient('frontend.db');
 
   final Logger logger = LoggerConsole(LoggerFile(File('frontend.log')));
   late final IRouter router = MyRouterDelegate(this);
@@ -47,6 +45,10 @@ class FrontendApp {
     (router as MyRouterDelegate).handleInitizlizngEnd();
   }
 
+  void onConnected(IMsgConnection connection) {
+    if (connection.statusCode == ConnectionStatus.connected) {}
+  }
+
   Future<void> init() async {
     if (!_settingFile.existsSync()) {
       throw const FileSystemException('Settings file not found');
@@ -54,6 +56,7 @@ class FrontendApp {
     _settingFileSS = _settingFile.watch().listen(_onSettingsChanged);
     _onSettingsChanged();
     unawaited(connection.reconnect());
+    connection.statusUpdates.listen(onConnected);
   }
 
   Future<void> dispose() async {
@@ -62,6 +65,7 @@ class FrontendApp {
     await (connection as FrontendWebSocketConnection).sc.close();
     vnThemeModeDark.dispose();
     (router as MyRouterDelegate).dispose();
+    db.dispose();
     logger.info('Disposed');
   }
 }

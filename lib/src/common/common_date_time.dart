@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:intl/intl.dart';
 import 'package:meta/meta.dart';
 
-import 'common_db_column.dart';
+import '../database/database_column.dart';
 
 final kDtDayFormatter = DateFormat('dd.MM.yyyy');
 final kDtMinutesFormatter = DateFormat('dd.MM.yyyy HH:mm');
@@ -173,16 +173,16 @@ class MyDateTime implements Comparable<MyDateTime> {
 }
 
 @immutable
-class DbColumnMyDateTime extends CommonDbColumnInteger<MyDateTime> {
+class DatabaseColumnMyDateTime extends DatabaseColumnUnsignedBase<MyDateTime> {
   @literal
-  const DbColumnMyDateTime(this.name);
+  const DatabaseColumnMyDateTime(this.name);
 
   @override
   final String name;
 
   @override
-  MyDateTime decode(int value) => MyDateTime.fromInt(value);
+  MyDateTime dartDecode(int value) => MyDateTime.fromInt(value);
 
   @override
-  int encode(MyDateTime value) => value.toInt;
+  int dartEncode(MyDateTime value) => value.toInt;
 }

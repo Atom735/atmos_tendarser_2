@@ -12,15 +12,15 @@ import '../common/common_date_time.dart';
 import '../common/common_misc.dart';
 import '../common/common_stop_watch_ticks.dart';
 import '../common/common_web_constants.dart';
-import '../data/parsed_data.dart';
-import '../data/tender_data_etpgpb.dart';
+import '../data/dto_parsed_data.dart';
+import '../data/dto_tender_data_etpgpb.dart';
 import '../interfaces/i_fetched_data.dart';
 import '../interfaces/i_fetching_params.dart';
 import '../interfaces/i_parsed_data.dart';
 import '../interfaces/i_parser.dart';
 
 @immutable
-class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
+class ParserEtpGpb implements IParser<DtoTenderDataEtpGpb> {
   @literal
   const ParserEtpGpb();
 
@@ -75,7 +75,7 @@ class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
   }
 
   @override
-  IParsedData<TenderDataEtpGpb> parse(IFetchedData fetched) {
+  IParsedData<DtoTenderDataEtpGpb> parse(IFetchedData fetched) {
     assert(fetched.bytes != null, 'No bytes');
     assert(fetched.params is IFetchingParamsWithData, 'No data in params');
     final sw = Stopwatch()..start();
@@ -84,8 +84,8 @@ class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
     final params = fetched.params as IFetchingParamsWithData;
     final offsetEmptyBlock = searchSublistBytes(bytes, _dataEmpty, 150000);
     if (offsetEmptyBlock != -1) {
-      return ParsedData(fetched, StopWatchTicks.fromSw(sw), StopWatchTicks.zero,
-          1, 1, const []);
+      return DtoParsedData(fetched, StopWatchTicks.fromSw(sw),
+          StopWatchTicks.zero, 1, 1, const []);
     }
     final offsetProcBlock = searchSublistBytes(bytes, _dataFragment0, 150000);
     if (offsetProcBlock == -1) throw Exception();
@@ -103,7 +103,7 @@ class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
     final fragmentPagination = fragmentNodes.last;
     var currentPage = -1;
     var maxPage = 0;
-    final tenders = <TenderDataEtpGpb>[];
+    final tenders = <DtoTenderDataEtpGpb>[];
 
     final dPublis = MyDateTime(
       kDateFormat.parse(params.data['date:date(dd.MM.yyyy)']!, true),
@@ -114,10 +114,10 @@ class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
         .whereType<Element>()
         .where(_nodeIsDivProcedure)) {
       final v = _EtpGpbProcedureVisitor()..visitChildren(el);
-      tenders.add(TenderDataEtpGpb(
+      tenders.add(DtoTenderDataEtpGpb(
         v.id,
         now,
-        urlBase.resolve(v.link).toString(),
+        Uri.decodeFull(urlBase.resolve(v.link).toString()),
         v.number,
         v.description,
         v.sum,
@@ -126,7 +126,7 @@ class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
         _parseEndTime(v.dateEnd),
         _parseEndTime(v.dateAuction),
         v.companyName,
-        v.companyLogo,
+        Uri.decodeFull(urlBase.resolve(v.companyLogo).toString()),
         v.auctionType,
         v.lots,
         v.regions,
@@ -154,7 +154,7 @@ class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
       currentPage = 1;
     }
     final tParsing = StopWatchTicks.fromSw(sw);
-    return ParsedData(
+    return DtoParsedData(
       fetched,
       tDeserialization,
       tParsing,

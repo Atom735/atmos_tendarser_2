@@ -23,6 +23,9 @@ abstract class IDataProvider<T, O extends T, S extends IDataSearchStruct> {
   /// Получить список данных по списку айди
   FutureOr<List<O>> getByIds(List<int> ids, {bool not = false});
 
+  /// Получить интервал данных (например для синхронизации)
+  IDataInterval<O> getIntervalSync(int offset, int length, DateTime timestamp);
+
   /// Получить интервал данных (например для отображения в списке)
   FutureOr<IDataInterval<O>> getInterval(int offset, int length, [S? search]);
 
@@ -49,6 +52,9 @@ abstract class IDataProvider<T, O extends T, S extends IDataSearchStruct> {
 
   /// Возвращает кол-во данных на том конце
   FutureOr<int> length([S? search]);
+
+  /// Возвращает кол-во данных на том конце
+  int lengthSync(DateTime timestamp);
 
   /// Стрим обновлений данного провайдера
   Stream<DataProviderEvent> get updates;

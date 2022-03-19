@@ -19,7 +19,7 @@ class MsgDone implements IMsg {
     return MsgDone(id);
   }
 
-  static const typeId = 4;
+  static const typeId = 3;
 
   @override
   final int id;

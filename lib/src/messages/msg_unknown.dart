@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
 import 'package:meta/meta.dart';
 
-import '../common/common_misc.dart';
 import '../interfaces/i_msg.dart';
 
 @immutable

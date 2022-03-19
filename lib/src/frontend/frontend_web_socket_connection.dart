@@ -36,8 +36,9 @@ class FrontendWebSocketConnection implements IMsgConnection {
   }
 
   int _id = 1;
+
   @override
-  int get msgId => _id += 2;
+  int get mewMsgId => _id += 2;
 
   @override
   Future<void> reconnect() async {
@@ -45,11 +46,12 @@ class FrontendWebSocketConnection implements IMsgConnection {
       app.logger.debug('WebSocket: reconnect');
       _status(ConnectionStatus.connecting);
       ws = await WebSocket.connect('ws://$adress');
-      _status(ConnectionStatus.connected);
       app.logger.debug('WebSocket: connected');
       ws.listen(handleData, onDone: handleDone, onError: handleError);
-      final v = await request(MsgHandshake(msgId, app.version));
+      final v = await request(MsgHandshake(mewMsgId, app.version));
       remoteVersion = (v as MsgHandshake).version;
+      app.logger.debug('WebSocket: handshaked');
+      _status(ConnectionStatus.connected);
     } on Object catch (e) {
       _status(
         ConnectionStatus.error,

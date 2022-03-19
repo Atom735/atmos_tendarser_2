@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 
-import 'common_db_column.dart';
+import '../database/database_column.dart';
 
 @immutable
 class StopWatchTicks {
@@ -24,16 +24,17 @@ class StopWatchTicks {
 }
 
 @immutable
-class DbColumnStopWatchTicks extends CommonDbColumnInteger<StopWatchTicks> {
+class DatabaseStopWatchTicks
+    extends DatabaseColumnUnsignedBase<StopWatchTicks> {
   @literal
-  const DbColumnStopWatchTicks(this.name);
+  const DatabaseStopWatchTicks(this.name);
 
   @override
   final String name;
 
   @override
-  StopWatchTicks decode(int value) => StopWatchTicks(value);
+  StopWatchTicks dartDecode(int value) => StopWatchTicks(value);
 
   @override
-  int encode(StopWatchTicks value) => value.us;
+  int dartEncode(StopWatchTicks value) => value.us;
 }

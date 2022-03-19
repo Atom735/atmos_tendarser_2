@@ -9,8 +9,8 @@ import '../interfaces/i_fetching_params.dart';
 
 /// Полные сырые данные ответа запроса хранимые в БД
 @immutable
-class FetchedData implements IFetchedData {
-  const FetchedData(
+class DtoFetchedData implements IFetchedData {
+  const DtoFetchedData(
     this.params,
     this.tConnecting,
     this.tSending,

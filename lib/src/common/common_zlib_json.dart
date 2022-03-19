@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:meta/meta.dart';
 
-import 'common_db_column.dart';
+import '../database/database_column.dart';
 
 final _dict = Uint8List.fromList(File('dicts/json.bin').readAsBytesSync());
 
@@ -36,16 +36,16 @@ class ZLibJsonCodec extends Codec<Object?, Uint8List> {
 }
 
 @immutable
-class DbColumnJson extends CommonDbColumnBlob<Object?> {
+class DatabaseColumnJson extends DatabaseColumnBlobBase<Object?> {
   @literal
-  const DbColumnJson([this.name = 'json']);
+  const DatabaseColumnJson([this.name = 'json']);
 
   @override
   final String name;
 
   @override
-  Object? decode(Uint8List value) => const ZLibJsonCodec().decode(value);
+  Object? dartDecode(Uint8List value) => const ZLibJsonCodec().decode(value);
 
   @override
-  Uint8List encode(Object? value) => const ZLibJsonCodec().encode(value);
+  Uint8List dartEncode(Object? value) => const ZLibJsonCodec().encode(value);
 }

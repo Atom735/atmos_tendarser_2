@@ -1,28 +1,31 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:intl/intl.dart';
 
 import '../backend/parser_etpgpb.dart';
 import '../common/common_date_time.dart';
+import '../data/dto_updater_data.dart';
 import '../data/fetching_params.dart';
 import '../data/fetching_params_etpgpb.dart';
-import '../data/tender_data_etpgpb.dart';
-import '../data/updater_data_etpgpb.dart';
-import 'backend_module_etpgpb.dart';
+import '../database/database_app_server.dart';
+import '../interfaces/i_web_client.dart';
 
-class UpdaterEtpGpb extends UpdaterDataEtpGpb {
-  UpdaterEtpGpb(this.module, UpdaterDataEtpGpb v) : super(v.settings, v.state);
+class UpdaterEtpGpb extends DtoUpdaterData {
+  UpdaterEtpGpb(
+    this.webClient,
+    this.db,
+    DtoUpdaterData v,
+  ) : super(v.settings, v.state);
 
-  final BackendModuleEtpGpb module;
-
+  final DatabaseAppServer db;
+  final IWebClient webClient;
   Stream<UpdaterEtpGpb> get updates => _sc.stream;
-  Future<void> get done => _doneCompleter.future;
+  Future<UpdaterEtpGpb> get done => _doneCompleter.future;
 
   static const parser = ParserEtpGpb();
 
   Completer<void> _pauseCompleter = Completer<void>.sync();
-  final _doneCompleter = Completer<void>();
+  final _doneCompleter = Completer<UpdaterEtpGpb>();
   final _sc = StreamController<UpdaterEtpGpb>.broadcast(sync: true);
 
   void pause() => _pauseCompleter.complete();
@@ -46,7 +49,7 @@ class UpdaterEtpGpb extends UpdaterDataEtpGpb {
         await step();
       } while (next());
       status(UpdaterStateStatus.done);
-      _doneCompleter.complete();
+      _doneCompleter.complete(this);
     } on Object catch (e, st) {
       status(UpdaterStateStatus.error, '$e\n$st');
       _doneCompleter.completeError(e, st);
@@ -84,7 +87,7 @@ class UpdaterEtpGpb extends UpdaterDataEtpGpb {
 
   Future<void> step() async {
     status(UpdaterStateStatus.run);
-    final task = module.app.webClient.createTask(fetchingParams);
+    final task = webClient.createTask(fetchingParams);
     final fetched = await task.done;
     final canParse = parser.canParse(fetched);
     if (!canParse) {
@@ -92,14 +95,7 @@ class UpdaterEtpGpb extends UpdaterDataEtpGpb {
     }
     final parsed = parser.parse(fetched);
     state.pageMax = parsed.iMax;
-    final dp = module.dpTenders;
-    final tendersAdded =
-        dp.getByIds(parsed.items.map(TenderDataEtpGpb.getId).toList());
-    final tenders = HashSet<TenderDataEtpGpb>(
-        equals: (p0, p1) => p0.id == p1.id, hashCode: (e) => e.id)
-      ..addAll(parsed.items)
-      ..removeAll(tendersAdded);
-    dp.addAll(tenders.toList());
+    db.addTenders(parsed.items);
   }
 
   Future<void> dispose() {

@@ -8,22 +8,23 @@ import '../interfaces/i_data_interval.dart';
 /// Интервал данных используется для отображения в списках
 @immutable
 class DataInterval<T> implements IDataInterval<T> {
-  const DataInterval(this.offset, this._data);
+  const DataInterval(this.offset, this.data);
 
-  final List<T> _data;
+  @override
+  final List<T> data;
   @override
   final int offset;
   @override
-  int get length => _data.length;
+  int get length => data.length;
 
   @override
   bool operator &(int index) => index >= offset && index < offset + length;
 
   @override
-  T operator [](int index) => _data[index - offset];
+  T operator [](int index) => data[index - offset];
 
   @override
-  String toString() => '$offset:${_data.length}';
+  String toString() => '$offset:${data.length}';
 }
 
 @immutable
@@ -34,6 +35,8 @@ class DataIntervalFictive<T> implements IDataInterval<T> {
   final int offset;
   @override
   final int length;
+  @override
+  List<T> get data => const [];
 
   @override
   bool operator &(int index) => index >= offset && index < offset + length;

@@ -8,7 +8,7 @@ import 'package:atmos_logger/atmos_logger.dart';
 
 import '../common/common_stop_watch_ticks.dart';
 import '../common/common_web_constants.dart';
-import '../data/fetched_data.dart';
+import '../data/dto_fetched_data.dart';
 import '../interfaces/i_fetched_data.dart';
 import '../interfaces/i_fetching_params.dart';
 import '../interfaces/i_web_client.dart';
@@ -56,18 +56,47 @@ class WebClient implements IWebClient {
     final exists = file?.existsSync() ?? false;
     if (exists) {
       final r = BinaryReader(file!.readAsBytesSync());
-      final data = FetchedData(
-        params,
-        StopWatchTicks(r.readSize()),
-        StopWatchTicks(r.readSize()),
-        StopWatchTicks(r.readSize()),
-        StopWatchTicks(r.readSize()),
-        r.readSize() != 0,
-        WebContentType.values[r.readSize()],
-        r.readSize(),
-        r.readSize(),
-        r.readListUint8(),
-      );
+
+      late final DtoFetchedData data;
+      if (file.statSync().changed.isBefore(DateTime(2022, 3, 18))) {
+        int readSize() {
+          var count = 0;
+          var byte = r.readUint8();
+          var s = 0;
+          while (byte & 0x80 != 0) {
+            count |= (byte & 0x7f) << s;
+            s += 7;
+            byte = r.readUint8();
+          }
+          return count |= byte << s;
+        }
+
+        data = DtoFetchedData(
+          params,
+          StopWatchTicks(readSize()),
+          StopWatchTicks(readSize()),
+          StopWatchTicks(readSize()),
+          StopWatchTicks(readSize()),
+          readSize() != 0,
+          WebContentType.values[readSize()],
+          readSize(),
+          readSize(),
+          r.readListUint8(size: readSize()),
+        );
+      } else {
+        data = DtoFetchedData(
+          params,
+          StopWatchTicks(r.readSize()),
+          StopWatchTicks(r.readSize()),
+          StopWatchTicks(r.readSize()),
+          StopWatchTicks(r.readSize()),
+          r.readSize() != 0,
+          WebContentType.values[r.readSize()],
+          r.readSize(),
+          r.readSize(),
+          r.readListUint8(),
+        );
+      }
 
       completerDone.complete(data);
       if (completerCancel.isCompleted) return;
@@ -138,7 +167,7 @@ class WebClient implements IWebClient {
 
       if (completerCancel.isCompleted) return;
 
-      final data = FetchedData(
+      final data = DtoFetchedData(
         params,
         tConnecting,
         tSending,

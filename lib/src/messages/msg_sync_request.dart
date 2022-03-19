@@ -3,11 +3,13 @@ import 'dart:typed_data';
 import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
 import 'package:meta/meta.dart';
 
+import '../data/dto_database_sync_data.dart';
+import '../data/table_database_sync_data.dart';
 import '../interfaces/i_msg.dart';
 
 @immutable
 class MsgSyncRequest implements IMsg {
-  const MsgSyncRequest(this.id, this.timestamps);
+  const MsgSyncRequest(this.id, this.syncData);
 
   factory MsgSyncRequest.decode(Uint8List data) {
     final reader = BinaryReader(data);
@@ -16,40 +18,28 @@ class MsgSyncRequest implements IMsg {
       throw Exception('Untyped msg');
     }
     final id = reader.readSize();
-    final timestamps = Map.fromEntries(reader.readList(timestampReader));
-    return MsgSyncRequest(id, timestamps);
+    final dataSync = table.msgDartRead(reader);
+    return MsgSyncRequest(id, dataSync);
   }
 
-  static const typeId = 3;
+  static const typeId = 4;
 
   @override
   final int id;
-  final Map<String, DateTime> timestamps;
 
-  static MapEntry<String, DateTime> timestampReader(
-      int i, BinaryReader reader) {
-    final key = reader.readString();
-    final value = reader.readDateTime();
-    return MapEntry<String, DateTime>(key, value);
+  final DtoDatabaseSyncData syncData;
+
+  static const table = TableDatabaseSyncData();
+
+  @override
+  Uint8List get toBytes {
+    final writer = BinaryWriter()
+      ..writeSize(typeId)
+      ..writeSize(id);
+    table.msgDartWrite(syncData, writer);
+    return writer.takeBytes();
   }
 
-  static void timestampWriter(
-          MapEntry<String, DateTime> val, int i, BinaryWriter writer) =>
-      writer
-        ..writeString(val.key)
-        ..writeDateTime(val.value);
-
   @override
-  Uint8List get toBytes => (BinaryWriter()
-        ..writeSize(typeId)
-        ..writeSize(id)
-        ..writeList(
-          timestamps.entries.toList(),
-          timestampWriter,
-        ))
-      .takeBytes();
-
-  @override
-  String toString() => 'MsgSyncRequest(id=$id, '
-      '${timestamps.entries.map((e) => '${e.key}=${e.value}').join(', ')})';
+  String toString() => 'MsgSyncRequest(id=$id, $syncData)';
 }

@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 
-import 'common_db_column.dart';
+import '../database/database_column.dart';
 
 /// Метод подключения Web-клиента
 enum WebClientMethod {
@@ -34,19 +34,22 @@ extension WebClientMethodX on WebClientMethod {
 }
 
 @immutable
-class DbColumnWebClientMethod extends CommonDbColumnInteger<WebClientMethod> {
+class DatabaseColumnWebClientMethod
+    extends DatabaseColumnUnsignedBase<WebClientMethod> {
   @literal
-  const DbColumnWebClientMethod(this.name);
+  const DatabaseColumnWebClientMethod(this.name);
 
   @override
   final String name;
 
   @override
-  WebClientMethod decode(int value) => WebClientMethod.values[value];
+  WebClientMethod dartDecode(int value) => WebClientMethod.values[value];
 
   @override
-  int encode(WebClientMethod value) => value.index;
+  int dartEncode(WebClientMethod value) => value.index;
 }
+
+class DatabaseColumnUnsigned {}
 
 /// Тип веб контента
 enum WebContentType {
@@ -121,16 +124,17 @@ extension WebContentTypeX on WebContentType {
 }
 
 @immutable
-class DbColumnWebContentType extends CommonDbColumnInteger<WebContentType> {
+class DatabaseColumnWebContentType
+    extends DatabaseColumnUnsignedBase<WebContentType> {
   @literal
-  const DbColumnWebContentType(this.name);
+  const DatabaseColumnWebContentType(this.name);
 
   @override
   final String name;
 
   @override
-  WebContentType decode(int value) => WebContentType.values[value];
+  WebContentType dartDecode(int value) => WebContentType.values[value];
 
   @override
-  int encode(WebContentType value) => value.index;
+  int dartEncode(WebContentType value) => value.index;
 }

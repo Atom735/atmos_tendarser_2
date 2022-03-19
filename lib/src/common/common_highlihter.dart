@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'common_db_column.dart';
+import '../database/database_column.dart';
 
 List<TextSpan> highlightText(String text, TextStyle style) {
   final spans = <TextSpan>[];

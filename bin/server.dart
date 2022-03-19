@@ -3,6 +3,7 @@ import 'package:atmos_tendarser_2/src/backend/backend_app.dart';
 Future<void> main(List<String> args) async {
   final app = BackendApp();
   await app.run(args);
+  // app.spawnNewUpdater(DateTime(2022, 3), DateTime(2022, 2));
   // var now = DateTime.now();
   // now = DateTime(now.year, now.month, now.day);
   // app.pEtpGpb.spawnNewUpdater(

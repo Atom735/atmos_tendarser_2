@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:meta/meta.dart';
 
-import 'common_db_column.dart';
+import '../database/database_column.dart';
 
 final _dict = Uint8List.fromList(File('dicts/link.bin').readAsBytesSync());
 
@@ -36,16 +36,16 @@ class ZLibLinkCodec extends Codec<String, Uint8List> {
 }
 
 @immutable
-class DbColumnLink extends CommonDbColumnBlob<String> {
+class DatabaseColumnLink extends DatabaseColumnBlobBase<String> {
   @literal
-  const DbColumnLink([this.name = 'link']);
+  const DatabaseColumnLink([this.name = 'link']);
 
   @override
   final String name;
 
   @override
-  String decode(Uint8List value) => const ZLibLinkCodec().decode(value);
+  String dartDecode(Uint8List value) => const ZLibLinkCodec().decode(value);
 
   @override
-  Uint8List encode(String value) => const ZLibLinkCodec().encode(value);
+  Uint8List dartEncode(String value) => const ZLibLinkCodec().encode(value);
 }

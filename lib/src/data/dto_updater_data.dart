@@ -1,10 +1,10 @@
 import '../common/common_date_time.dart';
 
-class UpdaterDataEtpGpb {
-  UpdaterDataEtpGpb(this.settings, this.state);
+class DtoUpdaterData {
+  DtoUpdaterData(this.settings, this.state);
 
-  final UpdaterDataSettingsEtpGpb settings;
-  final UpdaterDataStateEtpGpb state;
+  final DtoUpdaterDataSettings settings;
+  final DtoUpdaterDataState state;
 
   late final int intervalDays =
       settings.start.dt.difference(settings.end.dt).inDays + 1;
@@ -16,8 +16,8 @@ class UpdaterDataEtpGpb {
   double get progressPagesStep => 1 / state.pageMax;
 }
 
-class UpdaterDataSettingsEtpGpb {
-  UpdaterDataSettingsEtpGpb(this.id, this.timestamp, this.start, this.end);
+class DtoUpdaterDataSettings {
+  DtoUpdaterDataSettings(this.id, this.timestamp, this.start, this.end);
 
   final int id;
   final DateTime timestamp;
@@ -25,8 +25,8 @@ class UpdaterDataSettingsEtpGpb {
   final MyDateTime end;
 }
 
-class UpdaterDataStateEtpGpb {
-  UpdaterDataStateEtpGpb(this.id, this.timestamp, this.page, this.date,
+class DtoUpdaterDataState {
+  DtoUpdaterDataState(this.id, this.timestamp, this.page, this.date,
       this.pageMax, this.statusCode, this.statusMessage);
 
   final int id;

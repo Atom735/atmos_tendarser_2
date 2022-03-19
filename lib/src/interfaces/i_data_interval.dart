@@ -3,6 +3,8 @@ abstract class IDataInterval<T> {
   int get offset;
   int get length;
 
+  List<T> get data;
+
   // /// Удаляет элемент по индексу
   // void remove(int index);
 

@@ -5,8 +5,8 @@ import '../interfaces/i_fetched_data.dart';
 import '../interfaces/i_parsed_data.dart';
 
 @immutable
-class ParsedData<T> implements IParsedData<T> {
-  const ParsedData(this.fetched, this.tDeserialization, this.tParsing,
+class DtoParsedData<T> implements IParsedData<T> {
+  const DtoParsedData(this.fetched, this.tDeserialization, this.tParsing,
       this.iCurrent, this.iMax, this.items);
 
   @override
