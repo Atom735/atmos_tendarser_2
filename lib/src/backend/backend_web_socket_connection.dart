@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
 import 'package:atmos_logger/atmos_logger_io.dart';
 
+import '../common/common_connection.dart';
 import '../interfaces/i_msg.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../messages/messages_decoder.dart';
@@ -12,7 +13,8 @@ import '../messages/msg_done.dart';
 import '../messages/msg_error.dart';
 import '../messages/msg_handshake.dart';
 
-class BackendWebSocketConnection implements IMsgConnection {
+class BackendWebSocketConnection extends CommonMsgConnection
+    implements IMsgConnection {
   BackendWebSocketConnection(
     this.ws,
     this.version,
@@ -21,72 +23,54 @@ class BackendWebSocketConnection implements IMsgConnection {
     this.onClose,
   ) {
     logger.debug('$this: new connection');
-    ws.listen(handleData, onDone: handleDone, onError: handleError);
+    ws.listen(handleDataRaw, onDone: handleDone, onError: handleError);
   }
 
   /// Версия приложения
+  @override
   final int version;
+  @override
   final Logger logger;
   final bool Function(IMsgConnection connection, IMsg msg) handler;
   final void Function(IMsgConnection connection) onClose;
-  final WebSocket ws;
+  @override
+  final Socket ws;
   bool handshaked = false;
 
   @override
-  void send(IMsg msg) {
-    ws.add(msg.toBytes);
-  }
-
-  @override
-  Future<IMsg> request(IMsg msg) {
-    final completer = Completer<IMsg>.sync();
-    requestsCompleters[msg.id] = completer;
-    send(msg);
-    return completer.future;
-  }
-
-  final requestsCompleters = <int, Completer<IMsg>>{};
-
-  @override
-  Stream<IMsg> openStream(IMsg msg) {
-    // ignore: close_sinks
-    final controller = StreamController<IMsg>(sync: true);
-    streamControllers[msg.id] = controller;
-    send(msg);
-    return controller.stream;
-  }
-
-  final streamControllers = <int, StreamController<IMsg>>{};
-  Future<void> handleData(Object? request) async {
-    // final reader = BinaryReader();
-    if (request is Uint8List) {
-      try {
-        final msg = const MessagesDecoder().convert(request);
-        logger.debug('$this: New MSG', msg.toString());
-        if (!handshaked) {
-          if (msg is! MsgHandshake) {
-            return send(MsgError(msg.id, 'Needs to handshake'));
-          } else {
-            handshaked = true;
-            return send(MsgHandshake(msg.id, version));
-          }
-        }
-
-        if (handler(this, msg)) return;
-        requestsCompleters.remove(msg.id)?.complete(msg);
-        streamControllers[msg.id]?.add(msg);
-        if (msg is MsgDone) {
-          await streamControllers.remove(msg.id)?.close();
-        }
-      } on Object catch (e) {
-        if (request.isEmpty) {
-          return send(MsgError(mewMsgId, 'Erorr on process message $e'));
-        }
-        final id = BinaryReader(request).readSize();
-        return send(MsgError(id, 'Erorr on process message $e'));
+  Future<void> handleData(Uint8List request) async {
+    try {
+      logger.debug('recived: ${request.length}');
+      final msg = const MessagesDecoder().convert(request);
+      logger.debug('WebSocket: New MSG', msg.toString());
+      requestsCompleters.remove(msg.id)?.complete(msg);
+      streamControllers[msg.id]?.add(msg);
+      if (msg is MsgDone) {
+        await streamControllers.remove(msg.id)?.close();
       }
-    } else {
-      logger.warn('$this: New unknown MSG', request.toString());
+      logger.debug('$this: New MSG', msg.toString());
+      if (!handshaked) {
+        if (msg is! MsgHandshake) {
+          send(MsgError(msg.id, 'Needs to handshake'));
+        } else {
+          handshaked = true;
+          send(MsgHandshake(msg.id, version));
+        }
+      }
+      if (handler(this, msg)) return;
+      requestsCompleters.remove(msg.id)?.complete(msg);
+      streamControllers[msg.id]?.add(msg);
+      if (msg is MsgDone) {
+        await streamControllers.remove(msg.id)?.close();
+      }
+    } on Object catch (e) {
+      if (request.isEmpty) {
+        final msg = MsgError(mewMsgId, 'Erorr on process message $e');
+        return send(msg);
+      }
+      final id = BinaryReader(request).readSize();
+      final msg = MsgError(id, 'Erorr on process message $e');
+      return send(msg);
     }
   }
 
@@ -102,39 +86,12 @@ class BackendWebSocketConnection implements IMsgConnection {
 
   @override
   void close() {
-    for (final controller in streamControllers.values) {
-      controller
-        ..addError(const SocketException.closed())
-        ..close();
-    }
-    streamControllers.clear();
-    for (final completer in requestsCompleters.values) {
-      completer.completeError(const SocketException.closed());
-    }
-    requestsCompleters.clear();
-    ws.close(0);
+    super.close();
     onClose(this);
   }
 
   @override
   String toString() => 'WebSocket[${ws.hashCode.toRadixString(16)}]';
-
-  @override
-  String get adress => 'remote';
-
-  @override
-  Future<void> reconnect() {
-    throw UnimplementedError();
-  }
-
-  @override
-  ConnectionStatus get statusCode => ConnectionStatus.connected;
-
-  @override
-  String get statusMsg => '';
-
-  @override
-  Stream<IMsgConnection> get statusUpdates => throw UnimplementedError();
 
   int _id = 2;
 

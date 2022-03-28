@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
 import '../widgets/w_home_screen.dart';
+import '../widgets/w_tenders_screen.dart';
 import '../widgets/w_unknown_screen.dart';
 
 /// Информация о роутинге.
@@ -57,7 +58,7 @@ class RouteInfoUpdaters extends CommonRouteInfo<void> {
 class RouteInfoTenders extends CommonRouteInfo<void> {
   @literal
   const RouteInfoTenders([this.parserName = ''])
-      : super(const WUnknownScreen());
+      : super(const WTendersScreen());
 
   final String parserName;
 

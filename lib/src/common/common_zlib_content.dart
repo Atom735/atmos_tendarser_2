@@ -2,9 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:atmos_database/atmos_database.dart';
 import 'package:meta/meta.dart';
-
-import '../database/database_column.dart';
 
 final _dict = Uint8List.fromList(File('dicts/content.bin').readAsBytesSync());
 
@@ -36,16 +35,13 @@ class ZLibContentCodec extends Codec<Uint8List, Uint8List> {
 @immutable
 class DatabaseColumnContent extends DatabaseColumnBlobBase<Uint8List> {
   @literal
-  const DatabaseColumnContent([this.name = 'content']);
-
-  @override
-  final String name;
-
-  @override
-  Uint8List dartDecode(Uint8List value) =>
-      const ZLibContentCodec().decode(value);
+  const DatabaseColumnContent([String name = 'content']) : super(name);
 
   @override
   Uint8List dartEncode(Uint8List value) =>
+      const ZLibContentCodec().decode(value);
+
+  @override
+  Uint8List dartDecode(Uint8List value) =>
       const ZLibContentCodec().encode(value);
 }

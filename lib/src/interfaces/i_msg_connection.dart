@@ -5,23 +5,8 @@ import 'i_msg.dart';
 abstract class IMsgConnection {
   IMsgConnection._();
 
-  /// Адресс подключения
-  String get adress;
-
-  /// Состояние подключения код состояния
-  ConnectionStatus get statusCode;
-
-  /// Состояние подключения доп сообщение
-  String get statusMsg;
-
-  /// Стрим обновлений статуса подключений
-  Stream<IMsgConnection> get statusUpdates;
-
   /// Генератор айди для новых сообщений (чётные у сервеа, нечётные у клиента)
   int get mewMsgId;
-
-  /// Переподключение (Вернётся успешно только когда подклюились)
-  Future<void> reconnect();
 
   /// Отправляет сообщение в одну сторону
   void send(IMsg msg);
@@ -33,6 +18,27 @@ abstract class IMsgConnection {
   Stream<IMsg> openStream(IMsg msg);
 
   void close();
+}
+
+abstract class IMsgConnectionClient implements IMsgConnection {
+  IMsgConnectionClient._();
+
+  /// Адресс подключения
+  String get adress;
+
+  /// Состояние подключения код состояния
+  ConnectionStatus get statusCode;
+
+  /// Состояние подключения доп сообщение
+  String get statusMsg;
+
+  /// Стрим обновлений статуса подключений
+  Stream<IMsgConnectionClient> get statusUpdates;
+
+  /// Переподключение (Вернётся успешно только когда подклюились)
+  Future<void> reconnect();
+
+  void dispose();
 }
 
 /// Код состояния подключения

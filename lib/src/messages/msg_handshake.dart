@@ -16,12 +16,7 @@ final _magics = [
 class MsgHandshake implements IMsg {
   const MsgHandshake(this.id, this.version);
 
-  factory MsgHandshake.decode(Uint8List data) {
-    final reader = BinaryReader(data);
-    final type = reader.readSize();
-    if (type != typeId) {
-      throw Exception('Untyped msg');
-    }
+  factory MsgHandshake.decode(BinaryReader reader) {
     final id = reader.readSize();
     final version = reader.readSize();
     final magic = reader.readListUint8(size: _magics[version].length);

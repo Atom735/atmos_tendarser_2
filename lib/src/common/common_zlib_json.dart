@@ -2,9 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:atmos_database/atmos_database.dart';
 import 'package:meta/meta.dart';
-
-import '../database/database_column.dart';
 
 final _dict = Uint8List.fromList(File('dicts/json.bin').readAsBytesSync());
 
@@ -38,14 +37,11 @@ class ZLibJsonCodec extends Codec<Object?, Uint8List> {
 @immutable
 class DatabaseColumnJson extends DatabaseColumnBlobBase<Object?> {
   @literal
-  const DatabaseColumnJson([this.name = 'json']);
+  const DatabaseColumnJson([String name = 'json']) : super(name);
 
   @override
-  final String name;
+  Object? dartEncode(Uint8List value) => const ZLibJsonCodec().decode(value);
 
   @override
-  Object? dartDecode(Uint8List value) => const ZLibJsonCodec().decode(value);
-
-  @override
-  Uint8List dartEncode(Object? value) => const ZLibJsonCodec().encode(value);
+  Uint8List dartDecode(Object? value) => const ZLibJsonCodec().encode(value);
 }

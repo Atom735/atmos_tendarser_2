@@ -9,6 +9,8 @@ import '../database/database_app_client.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_router.dart';
 import '../routes/router_delegate.dart';
+import 'frontend_app_tender_list.dart';
+import 'frontend_app_updates_list.dart';
 import 'frontend_web_socket_connection.dart';
 
 /// Интерфейс клиентского приложения
@@ -22,7 +24,12 @@ class FrontendApp {
   late final IRouter router = MyRouterDelegate(this);
   final vnThemeModeDark = ValueNotifier(true);
   late String serverAdress;
-  late final IMsgConnection connection = FrontendWebSocketConnection(this);
+  late final IMsgConnectionClient connection =
+      FrontendWebSocketConnection(this);
+  late final updatesList = FrontendAppUpdatesList(this);
+  late final tenderList = FrontendAppTenderList(this);
+
+  bool get isOnline => connection.statusCode == ConnectionStatus.connected;
 
   final _settingFile = File('frontend.settings.yaml');
   late StreamSubscription<FileSystemEvent> _settingFileSS;
@@ -45,7 +52,7 @@ class FrontendApp {
     (router as MyRouterDelegate).handleInitizlizngEnd();
   }
 
-  void onConnected(IMsgConnection connection) {
+  void onConnected(IMsgConnectionClient connection) {
     if (connection.statusCode == ConnectionStatus.connected) {}
   }
 
@@ -61,7 +68,7 @@ class FrontendApp {
 
   Future<void> dispose() async {
     await _settingFileSS.cancel();
-    connection.close();
+    connection.dispose();
     await (connection as FrontendWebSocketConnection).sc.close();
     vnThemeModeDark.dispose();
     (router as MyRouterDelegate).dispose();

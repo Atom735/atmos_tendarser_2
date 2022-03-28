@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'dart:typed_data';
 
+import 'package:atmos_database/atmos_database.dart';
 import 'package:meta/meta.dart';
-
-import '../database/database_column.dart';
 
 final _dict = Uint8List.fromList(File('dicts/link.bin').readAsBytesSync());
 
@@ -38,14 +36,11 @@ class ZLibLinkCodec extends Codec<String, Uint8List> {
 @immutable
 class DatabaseColumnLink extends DatabaseColumnBlobBase<String> {
   @literal
-  const DatabaseColumnLink([this.name = 'link']);
+  const DatabaseColumnLink([String name = 'link']) : super(name);
 
   @override
-  final String name;
+  String dartEncode(Uint8List value) => const ZLibLinkCodec().decode(value);
 
   @override
-  String dartDecode(Uint8List value) => const ZLibLinkCodec().decode(value);
-
-  @override
-  Uint8List dartEncode(String value) => const ZLibLinkCodec().encode(value);
+  Uint8List dartDecode(String value) => const ZLibLinkCodec().encode(value);
 }

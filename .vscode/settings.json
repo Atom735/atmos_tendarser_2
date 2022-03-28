@@ -11,5 +11,6 @@
     "**/pubspec.lock": true,
     "**/web": true,
     "**/windows": true
-  }
+  },
+  "dart.additionalAnalyzerFileExtensions": ["drift"]
 }

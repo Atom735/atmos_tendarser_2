@@ -1,6 +1,5 @@
+import 'package:atmos_database/atmos_database.dart';
 import 'package:meta/meta.dart';
-
-import '../database/database_column.dart';
 
 /// Метод подключения Web-клиента
 enum WebClientMethod {
@@ -37,16 +36,13 @@ extension WebClientMethodX on WebClientMethod {
 class DatabaseColumnWebClientMethod
     extends DatabaseColumnUnsignedBase<WebClientMethod> {
   @literal
-  const DatabaseColumnWebClientMethod(this.name);
+  const DatabaseColumnWebClientMethod(String name) : super(name);
 
   @override
-  final String name;
+  WebClientMethod dartEncode(int value) => WebClientMethod.values[value];
 
   @override
-  WebClientMethod dartDecode(int value) => WebClientMethod.values[value];
-
-  @override
-  int dartEncode(WebClientMethod value) => value.index;
+  int dartDecode(WebClientMethod value) => value.index;
 }
 
 class DatabaseColumnUnsigned {}
@@ -127,14 +123,11 @@ extension WebContentTypeX on WebContentType {
 class DatabaseColumnWebContentType
     extends DatabaseColumnUnsignedBase<WebContentType> {
   @literal
-  const DatabaseColumnWebContentType(this.name);
+  const DatabaseColumnWebContentType(String name) : super(name);
 
   @override
-  final String name;
+  WebContentType dartEncode(int value) => WebContentType.values[value];
 
   @override
-  WebContentType dartDecode(int value) => WebContentType.values[value];
-
-  @override
-  int dartEncode(WebContentType value) => value.index;
+  int dartDecode(WebContentType value) => value.index;
 }

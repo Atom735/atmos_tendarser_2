@@ -1,216 +1,182 @@
+import 'dart:collection';
+import 'dart:developer';
+
+import 'package:atmos_database/atmos_database.dart';
+
 import '../common/common_date_time.dart';
-import '../data/dto_company.dart';
-import '../data/dto_database_sync_data.dart';
-import '../data/dto_ref.dart';
-import '../data/dto_string.dart';
-import '../data/dto_tender_data.dart';
-import '../data/dto_tender_data_etpgpb.dart';
-import '../data/dto_updater_data.dart';
-import '../data/table_updater_data.dart';
-import '../messages/msg_sync_data_frame.dart';
-import '../messages/msg_sync_data_haved.dart';
+import '../data/data_tender_db_etpgpb.dart';
+import '../data/tender_data_etpgpb.dart';
+import '../data/updater_data.dart';
 import 'database_app.dart';
-import 'database_column.dart';
 
 class DatabaseAppServer extends DatabaseApp {
   DatabaseAppServer(String fname) : super(fname);
 
-  MsgSyncDataFrame getSyncFrame(MsgSyncDataHaved msg) => MsgSyncDataFrame(
-        msg.id,
-        tableCompanies.sqlSelectSyncFrame(sql, msg.companies),
-        tableRegions.sqlSelectSyncFrame(sql, msg.regions),
-        tableRegionsRefs.sqlSelectSyncFrame(sql, msg.regionsRefs),
-        tableProps.sqlSelectSyncFrame(sql, msg.props),
-        tablePropsRefs.sqlSelectSyncFrame(sql, msg.propsRefs),
-        tableTenders.sqlSelectSyncFrame(sql, msg.tenders),
-      );
-
-  DtoDatabaseSyncData getLastSyncData() => DtoDatabaseSyncData(
-        tableCompanies.sqlSelectSyncIdMax(sql),
-        tableRegions.sqlSelectSyncIdMax(sql),
-        tableRegionsRefs.sqlSelectSyncIdMax(sql),
-        tableProps.sqlSelectSyncIdMax(sql),
-        tablePropsRefs.sqlSelectSyncIdMax(sql),
-        tableTenders.sqlSelectSyncIdMax(sql),
-      );
-
-  MsgSyncDataHaved getSyncDataChunkData(
-          int msgId, DtoDatabaseSyncData begin, DtoDatabaseSyncData end) =>
-      MsgSyncDataHaved(
-        msgId,
-        tableCompanies
-            .sqlSelectSyncIdsLimit(
-              sql,
-              begin.companies,
-              end.companies,
-            )
-            .toList(),
-        tableRegions
-            .sqlSelectSyncIdsLimit(
-              sql,
-              begin.regions,
-              end.regions,
-            )
-            .toList(),
-        tableRegionsRefs
-            .sqlSelectSyncIdsLimit(
-              sql,
-              begin.regionsRefs,
-              end.regionsRefs,
-            )
-            .toList(),
-        tableProps
-            .sqlSelectSyncIdsLimit(
-              sql,
-              begin.props,
-              end.props,
-            )
-            .toList(),
-        tablePropsRefs
-            .sqlSelectSyncIdsLimit(
-              sql,
-              begin.propsRefs,
-              end.propsRefs,
-            )
-            .toList(),
-        tableTenders
-            .sqlSelectSyncIdsLimit(
-              sql,
-              begin.tenders,
-              end.tenders,
-            )
-            .toList(),
-      );
-
   /// Добавляет данные тендеров в БД, возвращает кол-во добавлений/обновлений
-  int addTenders(List<DtoTenderDataEtpGpb> items) {
+  int addTenders(List<TenderDataEtpGpb> items) {
     final companies = tableCompanies
-        .sqlInsertNews1(
-          sql,
-          DtoTenderDataEtpGpb.getCompaniesAll(items),
-          1,
-          DtoCompany.selector,
+        .sqlInsertNewsUnqiueValues(
+          TenderDataEtpGpb.getAllCompanies(items),
+          [tableCompanies.vColumnName],
+          returnFulls: true,
         )
         .value;
-
     final regions = tableRegions
-        .sqlInsertNews1(
-          sql,
-          DtoTenderDataEtpGpb.getRegionsAll(items),
-          1,
-          DtoString.selector,
+        .sqlInsertNewsUnqiueValues(
+          TenderDataEtpGpb.getAllRegions(items),
+          [tableRegions.columnValue],
+          returnFulls: true,
         )
         .value;
-
     final props = tableProps
-        .sqlInsertNews1(
-          sql,
-          DtoTenderDataEtpGpb.getPropsAll(items),
-          1,
-          DtoString.selector,
+        .sqlInsertNewsUnqiueValues(
+          TenderDataEtpGpb.getAllProps(items),
+          [tableProps.columnValue],
+          returnFulls: true,
         )
         .value;
 
-    final tendersNews = DtoTenderData.createSet()
-      ..addAll(
-        items.map(
-          (e) => DtoTenderData(
-            e.id,
-            DatabaseColumnTimestamp.zeroDt,
-            e.link,
-            e.number,
-            e.name,
-            e.sum,
-            e.publish,
-            e.start,
-            e.end,
-            e.auctionDate,
-            e.lots,
-            props.firstWhere((p) => e.auctionType == p.value).id,
-            companies.firstWhere((p) => e.organizer == p.name).id,
-          ),
-        ),
-      );
-    final result = tableTenders
-        .sqlInsertNews1(sql, tendersNews, 0, DtoTenderData.getId, true)
-        .key;
+    final coresSelector = {
+      tableTenders.vColumnTenderId: [
+        ...items.map((e) => e.dbCore.tenderId),
+      ],
+    };
+    final coresInTable = SplayTreeSet<DataTenderDbEtpGpb>()
+      ..addAll(tableTenders.sqlSelectByColumns(coresSelector));
+    final coresForInsert = <DataTenderDbEtpGpb>[];
 
-    final regionsRefs = DtoRef.createSet()
-      ..addAll(
-        items.expand(
-          (item) => item.regions.map(
-            (value) => DtoRef.value(
-              item.id,
-              regions.firstWhere((e) => e.value == value).id,
-            ),
-          ),
-        ),
-      );
-    tableRegionsRefs.sqlInsertNewsMulti(
-      sql,
-      regionsRefs,
-      DtoRef.selectors,
-      true,
-    );
+    // final coresPrepared = <DataTenderDbEtpGpb>[];
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      item = items[i] = item.copyWith(
+          dbCore: item.dbCore.copyWith(
+        organizerId: companies
+            .firstWhere(
+              (c) => c.compareTo(item.dbOrganizer) == 0,
+            )
+            .id,
+        auctionTypeId: props
+            .firstWhere(
+              (c) => c.compareTo(item.dbAuctionType) == 0,
+            )
+            .id,
+      ));
+      final coreThis = item.dbCore;
+      final lookuped = coresInTable.lookup(coreThis);
+      if (lookuped == null) {
+        final coresWithSomeIds = coresInTable
+            .where(
+              (c) =>
+                  c.tenderId == coreThis.tenderId &&
+                  c.link == coreThis.link &&
+                  c.number == coreThis.number &&
+                  c.name == coreThis.name &&
+                  c.auctionTypeId == coreThis.auctionTypeId &&
+                  c.organizerId == coreThis.organizerId,
+            )
+            .toList();
+        if (coresWithSomeIds.isNotEmpty) {
+          if (coresWithSomeIds.length == 1) {
+            final c = coresWithSomeIds.first;
+            final diffs = <String>{};
+            if (c.sum.compareTo(coreThis.sum) != 0) {
+              diffs.add('sum');
+            }
+            if (c.publish.compareTo(coreThis.publish) != 0) {
+              diffs.add('publish');
+            }
+            if (c.start.compareTo(coreThis.start) != 0) {
+              diffs.add('start');
+            }
+            if (c.end.compareTo(coreThis.end) != 0) {
+              diffs.add('end');
+            }
+            if (c.auctionDate.compareTo(coreThis.auctionDate) != 0) {
+              diffs.add('auctionDate');
+            }
+            if (c.lots.compareTo(coreThis.lots) != 0) {
+              diffs.add('lots');
+            }
+            if ({'end'}.containsAll(diffs)) {
+              continue;
+              if (coreThis.end.quality == MyDateTimeQuality.unknown) {}
+              debugger();
+              throw Exception();
+            }
+            debugger();
+            throw Exception();
+          }
+          debugger();
+          throw Exception();
+        } else {
+          coresInTable.add(coreThis);
+          coresForInsert.add(coreThis);
+        }
+      }
+    }
+    tableTenders.sqlInsert(coresForInsert);
+    coresInTable
+      ..clear()
+      ..addAll(tableTenders.sqlSelectByColumns(coresSelector));
 
-    final propsRefs = DtoRef.createSet()
-      ..addAll(
-        items.expand(
-          (item) => [
-            DtoRef.value(
-              item.id,
-              props.firstWhere((e) => e.value == item.auctionType).id,
-            ),
-            ...item.auctionSections.map(
-              (value) => DtoRef.value(
-                item.id,
-                props.firstWhere((e) => e.value == value).id,
-              ),
-            ),
-            ...item.props.map(
-              (value) => DtoRef.value(
-                item.id,
-                props.firstWhere((e) => e.value == value).id,
-              ),
-            ),
-          ],
-        ),
-      );
+    final regionRefs = SplayTreeSet<DataRef>();
+    final propsRefs = SplayTreeSet<DataRef>();
+    for (final item in items) {
+      final coreThis = item.dbCore;
+      final coresWithSomeIds = coresInTable
+          .where(
+            (c) =>
+                c.tenderId == coreThis.tenderId &&
+                c.link == coreThis.link &&
+                c.number == coreThis.number &&
+                c.name == coreThis.name &&
+                c.auctionTypeId == coreThis.auctionTypeId &&
+                c.organizerId == coreThis.organizerId,
+          )
+          .toList();
+      for (final r in item.dbRegions) {
+        final rInTable = regions.firstWhere((e) => e.value == r.value);
+        assert(rInTable.id != 0, 'region need to be in table');
+        for (final core in coresWithSomeIds) {
+          assert(core.rowid != 0, 'core need to be in table');
+          regionRefs.add(DataRef.v(core.rowid, rInTable.id));
+        }
+      }
+      for (final r in item.dbProps) {
+        final rInTable = props.firstWhere((e) => e.value == r.value);
+        assert(rInTable.id != 0, 'prop need to be in table');
+        for (final core in coresWithSomeIds) {
+          assert(core.rowid != 0, 'core need to be in table');
+          propsRefs.add(DataRef.v(core.rowid, rInTable.id));
+        }
+      }
+    }
 
-    tablePropsRefs.sqlInsertNewsMulti(
-      sql,
-      propsRefs,
-      DtoRef.selectors,
-      true,
-    );
+    tableRegionsRefs.sqlInsertNewsUnqiueValues(regionRefs.toList(),
+        [tableRegionsRefs.columnA, tableRegionsRefs.columnB]);
+    tablePropsRefs.sqlInsertNewsUnqiueValues(
+        propsRefs.toList(), [tablePropsRefs.columnA, tablePropsRefs.columnB]);
 
-    return result;
+    TenderDataEtpGpb.getAllCompanies(items);
+    return 0;
   }
 
-  DtoUpdaterData createNewUpdaterEtpGpb(DateTime start, DateTime end) {
-    tableUpdaters.sqlInsert(sql, [
-      DtoUpdaterData(
-        DtoUpdaterDataSettings(
-          0,
-          DatabaseColumnTimestamp.zeroDt,
-          MyDateTime(start, MyDateTimeQuality.day),
-          MyDateTime(end, MyDateTimeQuality.day),
-        ),
-        DtoUpdaterDataState(
-          0,
-          DatabaseColumnTimestamp.zeroDt,
-          1,
-          MyDateTime(start, MyDateTimeQuality.day),
-          0,
-          UpdaterStateStatus.initializing,
-          '',
-        ),
+  UpdaterData createNewUpdaterEtpGpb(DateTime start, DateTime end) {
+    tableUpdaters.sqlInsert([
+      UpdaterData.v(
+        MyDateTime(start, MyDateTimeQuality.day),
+        MyDateTime(end, MyDateTimeQuality.day),
       ),
     ]);
-    final rowid = sql.lastInsertRowId;
-    return tableUpdaters.sqlSelectByIds(sql, [rowid]).first;
+    final rowid = tableUpdaters.sql.lastInsertRowId;
+    return tableUpdaters.sqlSelectByIds([rowid]).first;
   }
 
-  Iterable<DtoUpdaterData> getActiveUpdaters() => tableUpdaters.sqlSelect(sql,
-      '''WHERE ${TableUpdaterData.statusCodeColumnName} < ${UpdaterStateStatus.done.index}''');
+  Iterable<UpdaterData> getActiveUpdaters() => tableUpdaters.sqlSelect('''
+      WHERE ${tableUpdaters.vColumnsStatusCode.name}
+      IN (
+        ${UpdaterStateStatus.initializing.index},
+        ${UpdaterStateStatus.run.index},
+        ${UpdaterStateStatus.paused.index}
+      )''');
 }

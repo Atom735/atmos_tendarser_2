@@ -9,9 +9,7 @@ import '../interfaces/i_msg.dart';
 class MsgUnknown implements IMsg {
   const MsgUnknown(this.type, this.id, this.data);
 
-  factory MsgUnknown.decode(Uint8List v) {
-    final reader = BinaryReader(v);
-    final type = reader.readSize();
+  factory MsgUnknown.decode(int type, BinaryReader reader) {
     final id = reader.readSize();
     final length = reader.peek;
     final data = reader.readListUint8(size: length);

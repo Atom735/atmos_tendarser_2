@@ -1,9 +1,8 @@
 import 'dart:math';
 
+import 'package:atmos_database/atmos_database.dart';
 import 'package:intl/intl.dart';
 import 'package:meta/meta.dart';
-
-import '../database/database_column.dart';
 
 final kDtDayFormatter = DateFormat('dd.MM.yyyy');
 final kDtMinutesFormatter = DateFormat('dd.MM.yyyy HH:mm');
@@ -138,6 +137,11 @@ class MyDateTime implements Comparable<MyDateTime> {
   @override
   int compareTo(MyDateTime other) {
     if (identical(this, other)) return 0;
+    if (quality == MyDateTimeQuality.unknown) {
+      if (other.quality == MyDateTimeQuality.unknown) return 0;
+      return -1;
+    }
+    if (other.quality == MyDateTimeQuality.unknown) return 1;
     return dt.compareTo(other.dt);
   }
 
@@ -173,16 +177,17 @@ class MyDateTime implements Comparable<MyDateTime> {
 }
 
 @immutable
-class DatabaseColumnMyDateTime extends DatabaseColumnUnsignedBase<MyDateTime> {
+class DatabaseColumnMyDateTime extends DatabaseColumnIntegerBase<MyDateTime> {
   @literal
-  const DatabaseColumnMyDateTime(this.name);
+  const DatabaseColumnMyDateTime(
+    String name, {
+    bool unique = false,
+    bool indexed = false,
+  }) : super(name, unique: unique, indexed: indexed);
 
   @override
-  final String name;
+  MyDateTime dartEncode(int value) => MyDateTime.fromInt(value);
 
   @override
-  MyDateTime dartDecode(int value) => MyDateTime.fromInt(value);
-
-  @override
-  int dartEncode(MyDateTime value) => value.toInt;
+  int dartDecode(MyDateTime value) => value.toInt;
 }

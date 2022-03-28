@@ -9,12 +9,7 @@ import '../interfaces/i_msg.dart';
 class MsgError implements IMsg {
   const MsgError(this.id, this.error);
 
-  factory MsgError.decode(Uint8List v) {
-    final reader = BinaryReader(v);
-    final type = reader.readSize();
-    if (type != typeId) {
-      throw Exception('Untyped msg');
-    }
+  factory MsgError.decode(BinaryReader reader) {
     final id = reader.readSize();
     final error = reader.readString();
     return MsgError(id, error);

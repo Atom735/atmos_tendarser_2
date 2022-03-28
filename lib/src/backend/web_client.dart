@@ -55,6 +55,7 @@ class WebClient implements IWebClient {
     }
     final exists = file?.existsSync() ?? false;
     if (exists) {
+      await Future.delayed(const Duration(milliseconds: 16));
       final r = BinaryReader(file!.readAsBytesSync());
 
       late final DtoFetchedData data;

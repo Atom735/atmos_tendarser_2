@@ -1,21 +1,15 @@
+import 'package:atmos_database/atmos_database.dart';
 import 'package:flutter/widgets.dart';
 
-import '../database/database_column.dart';
-
 List<TextSpan> highlightText(String text, TextStyle style) {
+  final ss = highlightSeparateText(text);
   final spans = <TextSpan>[];
-  var i0 = 0;
-  while (true) {
-    var i1 = text.indexOf(highlightTextBegin, i0);
-    if (i1 == -1) {
-      break;
+  for (var i = 0; i < ss.length; i++) {
+    if (i.isOdd) {
+      spans.add(TextSpan(text: ss[i]));
+    } else {
+      spans.add(TextSpan(text: ss[i], style: style));
     }
-    spans.add(TextSpan(text: text.substring(i0, i1)));
-    i1 += highlightTextBegin.length;
-    final i2 = text.indexOf(highlightTextEnd, i1);
-    spans.add(TextSpan(text: text.substring(i1, i2), style: style));
-    i0 = i2 + highlightTextEnd.length;
   }
-  spans.add(TextSpan(text: text.substring(i0)));
   return spans;
 }

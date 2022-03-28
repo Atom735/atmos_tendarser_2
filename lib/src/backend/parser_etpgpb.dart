@@ -13,14 +13,14 @@ import '../common/common_misc.dart';
 import '../common/common_stop_watch_ticks.dart';
 import '../common/common_web_constants.dart';
 import '../data/dto_parsed_data.dart';
-import '../data/dto_tender_data_etpgpb.dart';
+import '../data/tender_data_etpgpb.dart';
 import '../interfaces/i_fetched_data.dart';
 import '../interfaces/i_fetching_params.dart';
 import '../interfaces/i_parsed_data.dart';
 import '../interfaces/i_parser.dart';
 
 @immutable
-class ParserEtpGpb implements IParser<DtoTenderDataEtpGpb> {
+class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
   @literal
   const ParserEtpGpb();
 
@@ -75,11 +75,10 @@ class ParserEtpGpb implements IParser<DtoTenderDataEtpGpb> {
   }
 
   @override
-  IParsedData<DtoTenderDataEtpGpb> parse(IFetchedData fetched) {
+  IParsedData<TenderDataEtpGpb> parse(IFetchedData fetched) {
     assert(fetched.bytes != null, 'No bytes');
     assert(fetched.params is IFetchingParamsWithData, 'No data in params');
     final sw = Stopwatch()..start();
-    final now = DateTime.now().toUtc();
     final bytes = fetched.bytes!;
     final params = fetched.params as IFetchingParamsWithData;
     final offsetEmptyBlock = searchSublistBytes(bytes, _dataEmpty, 150000);
@@ -103,7 +102,7 @@ class ParserEtpGpb implements IParser<DtoTenderDataEtpGpb> {
     final fragmentPagination = fragmentNodes.last;
     var currentPage = -1;
     var maxPage = 0;
-    final tenders = <DtoTenderDataEtpGpb>[];
+    final tenders = <TenderDataEtpGpb>[];
 
     final dPublis = MyDateTime(
       kDateFormat.parse(params.data['date:date(dd.MM.yyyy)']!, true),
@@ -114,9 +113,8 @@ class ParserEtpGpb implements IParser<DtoTenderDataEtpGpb> {
         .whereType<Element>()
         .where(_nodeIsDivProcedure)) {
       final v = _EtpGpbProcedureVisitor()..visitChildren(el);
-      tenders.add(DtoTenderDataEtpGpb(
+      tenders.add(TenderDataEtpGpb(
         v.id,
-        now,
         Uri.decodeFull(urlBase.resolve(v.link).toString()),
         v.number,
         v.description,
@@ -129,9 +127,9 @@ class ParserEtpGpb implements IParser<DtoTenderDataEtpGpb> {
         Uri.decodeFull(urlBase.resolve(v.companyLogo).toString()),
         v.auctionType,
         v.lots,
-        v.regions,
-        v.auctionSections,
-        v.props,
+        v.regions.toList(),
+        v.auctionSections.toList(),
+        v.props.toList(),
       ));
     }
     if (fragmentPagination.nodes.isNotEmpty) {

@@ -1,19 +1,25 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
-import '../interfaces/i_msg.dart';
+import 'package:atmos_logger/src/logger.dart';
+
+import '../common/common_connection.dart';
 import '../interfaces/i_msg_connection.dart';
-import '../messages/messages_decoder.dart';
-import '../messages/msg_done.dart';
 import '../messages/msg_handshake.dart';
 import 'frontend_app.dart';
 
-class FrontendWebSocketConnection implements IMsgConnection {
+class FrontendWebSocketConnection extends CommonMsgConnection
+    implements IMsgConnectionClient {
   FrontendWebSocketConnection(this.app);
 
   final FrontendApp app;
-  late WebSocket ws;
+  @override
+  Logger get logger => app.logger;
+
+  @override
+  int get version => 1;
+  @override
+  late Socket ws;
 
   int remoteVersion = 1;
 
@@ -45,9 +51,9 @@ class FrontendWebSocketConnection implements IMsgConnection {
     try {
       app.logger.debug('WebSocket: reconnect');
       _status(ConnectionStatus.connecting);
-      ws = await WebSocket.connect('ws://$adress');
+      ws = await Socket.connect(adress, 49735);
       app.logger.debug('WebSocket: connected');
-      ws.listen(handleData, onDone: handleDone, onError: handleError);
+      ws.listen(handleDataRaw, onDone: handleDone, onError: handleError);
       final v = await request(MsgHandshake(mewMsgId, app.version));
       remoteVersion = (v as MsgHandshake).version;
       app.logger.debug('WebSocket: handshaked');
@@ -57,46 +63,6 @@ class FrontendWebSocketConnection implements IMsgConnection {
         ConnectionStatus.error,
         'Оишбка при подключении:\n$e',
       );
-    }
-  }
-
-  @override
-  void send(IMsg msg) {
-    ws.add(msg.toBytes);
-  }
-
-  @override
-  Future<IMsg> request(IMsg msg) {
-    final completer = Completer<IMsg>.sync();
-    requestsCompleters[msg.id] = completer;
-    send(msg);
-    return completer.future;
-  }
-
-  final requestsCompleters = <int, Completer<IMsg>>{};
-
-  @override
-  Stream<IMsg> openStream(IMsg msg) {
-    // ignore: close_sinks
-    final controller = StreamController<IMsg>(sync: true);
-    streamControllers[msg.id] = controller;
-    send(msg);
-    return controller.stream;
-  }
-
-  final streamControllers = <int, StreamController<IMsg>>{};
-
-  Future<void> handleData(Object? request) async {
-    if (request is Uint8List) {
-      final msg = const MessagesDecoder().convert(request);
-      app.logger.debug('WebSocket: New MSG', msg.toString());
-      requestsCompleters.remove(msg.id)?.complete(msg);
-      streamControllers[msg.id]?.add(msg);
-      if (msg is MsgDone) {
-        await streamControllers.remove(msg.id)?.close();
-      }
-    } else {
-      app.logger.warn('WebSocket: New unknown MSG', request.toString());
     }
   }
 
@@ -113,17 +79,11 @@ class FrontendWebSocketConnection implements IMsgConnection {
   }
 
   @override
-  void close() {
-    for (final controller in streamControllers.values) {
-      controller
-        ..addError(const SocketException.closed())
-        ..close();
+  void dispose() {
+    close();
+    if (statusCode == ConnectionStatus.connected) {
+      ws.close();
     }
-    streamControllers.clear();
-    for (final completer in requestsCompleters.values) {
-      completer.completeError(const SocketException.closed());
-    }
-    requestsCompleters.clear();
-    ws.close(0);
+    sc.close();
   }
 }

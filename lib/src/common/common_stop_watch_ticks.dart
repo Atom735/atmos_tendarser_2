@@ -1,6 +1,5 @@
+import 'package:atmos_database/atmos_database.dart';
 import 'package:meta/meta.dart';
-
-import '../database/database_column.dart';
 
 @immutable
 class StopWatchTicks {
@@ -27,14 +26,11 @@ class StopWatchTicks {
 class DatabaseStopWatchTicks
     extends DatabaseColumnUnsignedBase<StopWatchTicks> {
   @literal
-  const DatabaseStopWatchTicks(this.name);
+  const DatabaseStopWatchTicks(String name) : super(name);
 
   @override
-  final String name;
+  StopWatchTicks dartEncode(int value) => StopWatchTicks(value);
 
   @override
-  StopWatchTicks dartDecode(int value) => StopWatchTicks(value);
-
-  @override
-  int dartEncode(StopWatchTicks value) => value.us;
+  int dartDecode(StopWatchTicks value) => value.us;
 }

@@ -9,12 +9,7 @@ import '../interfaces/i_msg.dart';
 class MsgDone implements IMsg {
   const MsgDone(this.id);
 
-  factory MsgDone.decode(Uint8List v) {
-    final reader = BinaryReader(v);
-    final type = reader.readSize();
-    if (type != typeId) {
-      throw Exception('Untyped msg');
-    }
+  factory MsgDone.decode(BinaryReader reader) {
     final id = reader.readSize();
     return MsgDone(id);
   }

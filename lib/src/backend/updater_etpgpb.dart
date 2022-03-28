@@ -1,20 +1,21 @@
 import 'dart:async';
 
+import 'package:atmos_database/atmos_database.dart';
 import 'package:intl/intl.dart';
 
 import '../backend/parser_etpgpb.dart';
 import '../common/common_date_time.dart';
-import '../data/dto_updater_data.dart';
 import '../data/fetching_params.dart';
 import '../data/fetching_params_etpgpb.dart';
+import '../data/updater_data.dart';
 import '../database/database_app_server.dart';
 import '../interfaces/i_web_client.dart';
 
-class UpdaterEtpGpb extends DtoUpdaterData {
+class UpdaterEtpGpb extends UpdaterData {
   UpdaterEtpGpb(
     this.webClient,
     this.db,
-    DtoUpdaterData v,
+    UpdaterData v,
   ) : super(v.settings, v.state);
 
   final DatabaseAppServer db;
@@ -32,7 +33,7 @@ class UpdaterEtpGpb extends DtoUpdaterData {
 
   void status(UpdaterStateStatus code, [String message = '']) {
     state
-      ..timestamp = DateTime.now()
+      ..timestamp = getTimestamp()
       ..statusCode = code
       ..statusMessage = message;
     _sc.add(this);
