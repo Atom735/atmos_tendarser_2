@@ -5,6 +5,7 @@ import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
 import 'package:meta/meta.dart';
 
 import '../interfaces/i_msg.dart';
+import 'msg_db_get_interval_ids.dart';
 import 'msg_db_get_interval_request.dart';
 import 'msg_db_get_interval_response.dart';
 import 'msg_db_get_length_request.dart';
@@ -38,6 +39,8 @@ class MessagesDecoder extends Converter<Uint8List, IMsg> {
         return MsgDbGetIntervalRequest.decode(reader);
       case MsgDbGetIntervalResponse.typeId:
         return MsgDbGetIntervalResponse.decode(reader);
+      case MsgDbGetIntervalIds.typeId:
+        return MsgDbGetIntervalIds.decode(reader);
       default:
         return MsgUnknown.decode(type, reader);
     }

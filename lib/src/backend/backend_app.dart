@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
@@ -9,6 +10,7 @@ import '../database/database_app_server.dart';
 import '../interfaces/i_msg.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_web_client.dart';
+import '../messages/msg_db_get_interval_ids.dart';
 import '../messages/msg_db_get_interval_request.dart';
 import '../messages/msg_db_get_interval_response.dart';
 import '../messages/msg_db_get_length_request.dart';
@@ -27,7 +29,7 @@ class BackendApp {
   final Logger logger = LoggerConsole(LoggerFile(File('backend.log')));
   late ServerSocket server;
   final connections = <IMsgConnection>[];
-  late final IWebClient webClient = WebClient(const LoggerVoid());
+  late final IWebClient webClient = WebClient(logger);
   final updaters = <UpdaterEtpGpb>[];
 
   void _updaterStateUpdate(UpdaterEtpGpb updater) {
@@ -86,77 +88,112 @@ class BackendApp {
     if (msg is MsgDbGetIntervalRequest) {
       switch (msg.table) {
         case 0:
-          late List<DataTenderDbEtpGpb> tenders;
-          if (msg.search.isEmpty) {
-            tenders = db.tableTenders.sqlSelect(
-              '''
+          () async {
+            late List<DataTenderDbEtpGpb> tenders;
+            if (msg.search.isEmpty) {
+              tenders = db.tableTenders.sqlSelect(
+                '''
                 ORDER BY timestamp DESC
                 LIMIT ? OFFSET ?
               ''',
-              [msg.length, msg.offset],
-            ).toList();
-          } else {
-            tenders = db.tableTenders.sqlSelectFtsHl(
-              '''
+                [msg.length, msg.offset],
+              ).toList();
+            } else {
+              tenders = db.tableTenders.sqlSelectFts(
+                '''
                 WHERE ${db.tableTenders.nameFts} = ?
                 ORDER BY ${db.tableTenders.name}.timestamp DESC
                 LIMIT ? OFFSET ?
               ''',
-              [msg.search, msg.length, msg.offset],
-            ).toList();
-          }
-          final ids = tenders.map((e) => e.rowid).toList();
+                [msg.search, msg.length, msg.offset],
+              ).toList();
+            }
+            final idsTender = tenders.map((e) => e.rowid).toList();
+            final companies = db.tableCompanies
+                .sqlSelectByIds(tenders.map((e) => e.organizerId).toList())
+                .toList();
+            final regionsRefs = db.tableRegionsRefs.getByA(idsTender).toList();
+            final propsRefs = db.tablePropsRefs.getByA(idsTender).toList();
+            final regions = db.tableRegions
+                .sqlSelectByIds(
+                  regionsRefs.map((e) => e.idB).toList(),
+                )
+                .toList();
+            final props = db.tableProps
+                .sqlSelectByIds(
+                  propsRefs.map((e) => e.idB).toList(),
+                )
+                .toList();
 
-          final tendersW = BinaryWriter();
-          for (final item in tenders) {
-            db.tableTenders.binWrite(item, tendersW);
-          }
-          final companiesW = BinaryWriter();
-          for (final item in db.tableCompanies
-              .sqlSelectByIdsRaw(tenders.map((e) => e.organizerId).toList())) {
-            db.tableCompanies.binWriteRaw(item, companiesW);
-          }
-          final regionsRefs = db.tableRegionsRefs.getByA(ids).toList();
-          final regionsRefsW = BinaryWriter();
-          for (final item in regionsRefs) {
-            db.tableRegionsRefs.binWrite(item, regionsRefsW);
-          }
-          final propsRefs = db.tablePropsRefs.getByA(ids).toList();
-          final propsRefsW = BinaryWriter();
-          for (final item in propsRefs) {
-            db.tablePropsRefs.binWrite(item, propsRefsW);
-          }
-          final regionsW = BinaryWriter();
-          for (final item in db.tableRegions.sqlSelectByIdsRaw(
-            regionsRefs.map((e) => e.idB).toList(),
-          )) {
-            db.tableRegions.binWriteRaw(item, regionsW);
-          }
-          final propsW = BinaryWriter();
-          for (final item in db.tableProps.sqlSelectByIdsRaw(
-            propsRefs.map((e) => e.idB).toList(),
-          )) {
-            db.tableProps.binWriteRaw(item, propsW);
-          }
+            final rMsg = MsgDbGetIntervalIds(
+              msg.id,
+              0,
+              MsgDbGetIntervalIdsTenderData(
+                MsgDbIntevalsIdsData.e1(idsTender),
+                MsgDbIntevalsIdsData.e1(companies.map((e) => e.id).toList()),
+                MsgDbIntevalsIdsData.e1(regions.map((e) => e.id).toList()),
+                MsgDbIntevalsIdsData.e1(props.map((e) => e.id).toList()),
+                MsgDbIntevalsIdsData.e1(regionsRefs.map((e) => e.id).toList()),
+                MsgDbIntevalsIdsData.e1(propsRefs.map((e) => e.id).toList()),
+              ),
+            );
+            final r = await connection.request(rMsg);
 
-          final w = BinaryWriter();
-          db.tableTenders.binWrite(tenders.first, w);
-          final t = db.tableTenders.binRead(BinaryReader(w.takeBytes()));
+            if (r is! MsgDbGetIntervalIds) {
+              connection.send(MsgError(msg.id, 'Unknown response'));
+              return;
+            }
+            final v0tenders = rMsg.data.tenders.getDiff(r.data.tenders);
+            final v0companies = rMsg.data.companies.getDiff(r.data.companies);
+            final v0regions = rMsg.data.regions.getDiff(r.data.regions);
+            final v0props = rMsg.data.props.getDiff(r.data.props);
+            final v0regionsRefs =
+                rMsg.data.regionsRefs.getDiff(r.data.regionsRefs);
+            final v0propsRefs = rMsg.data.propsRefs.getDiff(r.data.propsRefs);
 
-          connection.send(MsgDbGetIntervalResponse(
-            msg.id,
-            0,
-            MsgDbGetIntervalResponseTenderData(
-              ids,
-              tendersW.takeBytes(),
-              companiesW.takeBytes(),
-              regionsW.takeBytes(),
-              propsW.takeBytes(),
-              regionsRefsW.takeBytes(),
-              propsRefsW.takeBytes(),
-            ),
-          ));
+            final tendersW = BinaryWriter();
+            for (final item
+                in tenders.where((e) => v0tenders.contains(e.rowid))) {
+              db.tableTenders.binWrite(item, tendersW);
+            }
+            final companiesW = BinaryWriter();
+            for (final item
+                in companies.where((e) => v0companies.contains(e.id))) {
+              db.tableCompanies.binWrite(item, companiesW);
+            }
+            final regionsRefsW = BinaryWriter();
+            for (final item
+                in regionsRefs.where((e) => v0regionsRefs.contains(e.id))) {
+              db.tableRegionsRefs.binWrite(item, regionsRefsW);
+            }
+            final propsRefsW = BinaryWriter();
+            for (final item
+                in propsRefs.where((e) => v0propsRefs.contains(e.id))) {
+              db.tablePropsRefs.binWrite(item, propsRefsW);
+            }
+            final regionsW = BinaryWriter();
+            for (final item in regions.where((e) => v0regions.contains(e.id))) {
+              db.tableRegions.binWrite(item, regionsW);
+            }
+            final propsW = BinaryWriter();
+            for (final item in props.where((e) => v0props.contains(e.id))) {
+              db.tableProps.binWrite(item, propsW);
+            }
 
+            connection.send(MsgDbGetIntervalResponse(
+              msg.id,
+              0,
+              MsgDbGetIntervalResponseTenderData(
+                idsTender,
+                tendersW.takeBytes(),
+                companiesW.takeBytes(),
+                regionsW.takeBytes(),
+                propsW.takeBytes(),
+                regionsRefsW.takeBytes(),
+                propsRefsW.takeBytes(),
+              ),
+            ));
+          }();
           return true;
         default:
           connection.send(MsgError(msg.id, 'Unknown table id'));

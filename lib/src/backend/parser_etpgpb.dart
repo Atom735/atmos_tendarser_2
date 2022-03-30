@@ -78,9 +78,11 @@ class ParserEtpGpb implements IParser<TenderDataEtpGpb> {
   IParsedData<TenderDataEtpGpb> parse(IFetchedData fetched) {
     assert(fetched.bytes != null, 'No bytes');
     assert(fetched.params is IFetchingParamsWithData, 'No data in params');
+
     final sw = Stopwatch()..start();
     final bytes = fetched.bytes!;
     final params = fetched.params as IFetchingParamsWithData;
+    print('.req/${params.uri.host},${params.data.values.join(',')}.bin');
     final offsetEmptyBlock = searchSublistBytes(bytes, _dataEmpty, 150000);
     if (offsetEmptyBlock != -1) {
       return DtoParsedData(fetched, StopWatchTicks.fromSw(sw),
@@ -253,6 +255,8 @@ class _EtpGpbProcedureVisitor extends TreeVisitor {
       case 'procedure__allRegionsTitle':
         return visitChildren(node);
       case 'procedure__infoPropsShare':
+      case '''procedure__detailsUnitTitle procedure__detailsUnitTitle--block procedure__detailsUnitTitle--cutPrice''':
+      case '''procedure__detailsSum procedure__detailsSum--cutPrice''':
         return;
       case 'procedure__link procedure__infoTitle':
         if (title.isNotEmpty) throw Exception();

@@ -14,6 +14,7 @@ import '../data/data_tender_db_etpgpb.dart';
 import '../data/tender_data_etpgpb.dart';
 import '../interfaces/i_data_interval.dart';
 import '../interfaces/i_msg_connection.dart';
+import '../messages/msg_db_get_interval_ids.dart';
 import '../messages/msg_db_get_interval_request.dart';
 import '../messages/msg_db_get_interval_response.dart';
 import '../messages/msg_db_get_length_request.dart';
@@ -81,7 +82,7 @@ class _WTendersScreenState extends State<WTendersScreen>
 
   Future<void> getInterval(int index) async {
     intervals.addFuture(index, intervalSize);
-    final r1 = await connection.request(
+    final r0 = await connection.request(
       MsgDbGetIntervalRequest(
         connection.mewMsgId,
         0,
@@ -90,6 +91,50 @@ class _WTendersScreenState extends State<WTendersScreen>
         intervalSize,
       ),
     );
+    if (r0 is! MsgDbGetIntervalIds) {
+      debugger();
+      throw Exception();
+    }
+    final db = app.db;
+    final dd = r0.data;
+    final tenders = <DataTenderDbEtpGpb>[];
+    final companies = <DataCompany>[];
+    final regions = <DataString>[];
+    final props = <DataString>[];
+    final regionsRefs = <DataRef>[];
+    final propsRefs = <DataRef>[];
+    final z0tenders = <DataTenderDbEtpGpb>[];
+    final z0companies = <DataCompany>[];
+    final z0regions = <DataString>[];
+    final z0props = <DataString>[];
+    final z0regionsRefs = <DataRef>[];
+    final z0propsRefs = <DataRef>[];
+    tenders.addAll(db.tableTenders.sqlSelectByIds(dd.tenders.decodedNums));
+    companies
+        .addAll(db.tableCompanies.sqlSelectByIds(dd.companies.decodedNums));
+    regions.addAll(db.tableRegions.sqlSelectByIds(dd.regions.decodedNums));
+    props.addAll(db.tableProps.sqlSelectByIds(dd.props.decodedNums));
+    regionsRefs
+        .addAll(db.tableRegionsRefs.sqlSelectByIds(dd.regionsRefs.decodedNums));
+    propsRefs
+        .addAll(db.tablePropsRefs.sqlSelectByIds(dd.propsRefs.decodedNums));
+
+    final r1 = await connection.request(MsgDbGetIntervalIds(
+      r0.id,
+      0,
+      MsgDbGetIntervalIdsTenderData(
+        MsgDbIntevalsIdsData.e2(
+            tenders.map((e) => e.rowid).toList(), dd.tenders),
+        MsgDbIntevalsIdsData.e2(
+            companies.map((e) => e.id).toList(), dd.companies),
+        MsgDbIntevalsIdsData.e2(regions.map((e) => e.id).toList(), dd.regions),
+        MsgDbIntevalsIdsData.e2(props.map((e) => e.id).toList(), dd.props),
+        MsgDbIntevalsIdsData.e2(
+            regionsRefs.map((e) => e.id).toList(), dd.regionsRefs),
+        MsgDbIntevalsIdsData.e2(
+            propsRefs.map((e) => e.id).toList(), dd.propsRefs),
+      ),
+    ));
     if (r1 is! MsgDbGetIntervalResponse) {
       debugger();
       throw Exception();
@@ -97,35 +142,47 @@ class _WTendersScreenState extends State<WTendersScreen>
     final data = r1.data;
     final ids = data.ids;
     final tendersR = BinaryReader(data.tenders);
-    final tenders = <DataTenderDbEtpGpb>[];
     while (tendersR.peek > 0) {
-      tenders.add(app.db.tableTenders.binRead(tendersR));
+      final d = db.tableTenders.binRead(tendersR);
+      tenders.add(d);
+      z0tenders.add(d);
     }
+    db.tableTenders.sqlInsert(z0tenders);
     final companiesR = BinaryReader(data.companies);
-    final companies = <DataCompany>[];
     while (companiesR.peek > 0) {
-      companies.add(app.db.tableCompanies.binRead(companiesR));
+      final d = db.tableCompanies.binRead(companiesR);
+      companies.add(d);
+      z0companies.add(d);
     }
+    db.tableCompanies.sqlInsert(z0companies);
     final regionsR = BinaryReader(data.regions);
-    final regions = <DataString>[];
     while (regionsR.peek > 0) {
-      regions.add(app.db.tableRegions.binRead(regionsR));
+      final d = db.tableRegions.binRead(regionsR);
+      regions.add(d);
+      z0regions.add(d);
     }
+    db.tableRegions.sqlInsert(z0regions);
     final propsR = BinaryReader(data.props);
-    final props = <DataString>[];
     while (propsR.peek > 0) {
-      props.add(app.db.tableProps.binRead(propsR));
+      final d = db.tableProps.binRead(propsR);
+      props.add(d);
+      z0props.add(d);
     }
+    db.tableProps.sqlInsert(z0props);
     final regionsRefsR = BinaryReader(data.regionsRefs);
-    final regionsRefs = <DataRef>[];
     while (regionsRefsR.peek > 0) {
-      regionsRefs.add(app.db.tableRegionsRefs.binRead(regionsRefsR));
+      final d = db.tableRegionsRefs.binRead(regionsRefsR);
+      regionsRefs.add(d);
+      z0regionsRefs.add(d);
     }
+    db.tableRegionsRefs.sqlInsert(z0regionsRefs);
     final propsRefsR = BinaryReader(data.propsRefs);
-    final propsRefs = <DataRef>[];
     while (propsRefsR.peek > 0) {
-      propsRefs.add(app.db.tablePropsRefs.binRead(propsRefsR));
+      final d = db.tablePropsRefs.binRead(propsRefsR);
+      propsRefs.add(d);
+      z0propsRefs.add(d);
     }
+    db.tablePropsRefs.sqlInsert(z0propsRefs);
     final tendersX = <TenderDataEtpGpb>[];
     for (final id in ids) {
       final core = tenders.firstWhere((e) => e.rowid == id);
