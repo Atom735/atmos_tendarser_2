@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:atmos_logger/atmos_logger_io.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:yaml/yaml.dart';
 
 import '../database/database_app_client.dart';
@@ -31,14 +32,11 @@ class FrontendApp {
 
   bool get isOnline => connection.statusCode == ConnectionStatus.connected;
 
-  final _settingFile = File('frontend.settings.yaml');
+  final _settingFile = rootBundle.loadString('frontend.settings.yaml');
   late StreamSubscription<FileSystemEvent> _settingFileSS;
-  void _onSettingsChanged([FileSystemEvent? event]) {
-    if (!_settingFile.existsSync()) {
-      throw const FileSystemException('Settings file not found');
-    }
+  Future<void> _onSettingsChanged() async {
     final yaml = loadYamlDocument(
-      _settingFile.readAsStringSync(),
+      await _settingFile,
     ).contents as YamlMap;
 
     vnThemeModeDark.value = yaml['theme_mode'] == 'dark';
@@ -57,10 +55,6 @@ class FrontendApp {
   }
 
   Future<void> init() async {
-    if (!_settingFile.existsSync()) {
-      throw const FileSystemException('Settings file not found');
-    }
-    _settingFileSS = _settingFile.watch().listen(_onSettingsChanged);
     _onSettingsChanged();
     unawaited(connection.reconnect());
     connection.statusUpdates.listen(onConnected);
