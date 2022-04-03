@@ -171,8 +171,8 @@ class TableDataUpdater extends DatabaseTable<UpdaterData> {
   static const kTableName = 'Updaters';
   static const kColumnsFull = <DatabaseColumn>[
     ...kColumnsState,
-    DatabaseColumnMyDateTime('start'),
-    DatabaseColumnMyDateTime('end'),
+    kColumnsStart,
+    kColumnsEnd,
     // DatabaseColumnUnsigned('parserId'),
   ];
   static const kColumnsState = <DatabaseColumn>[
@@ -188,6 +188,10 @@ class TableDataUpdater extends DatabaseTable<UpdaterData> {
   DatabaseColumnUnsigned get vColumnsStatusCode => kColumnsStatusCode;
   static const kColumnsTimestamp = DatabaseColumnTimestamp('timestamp');
   DatabaseColumnTimestamp get vColumnsTimestamp => kColumnsTimestamp;
+  static const kColumnsStart = DatabaseColumnMyDateTime('start');
+  DatabaseColumnMyDateTime get vColumnsStart => kColumnsStart;
+  static const kColumnsEnd = DatabaseColumnMyDateTime('end');
+  DatabaseColumnMyDateTime get vColumnsEnd => kColumnsEnd;
 
   @override
   List dartDecode(UpdaterData value) => [

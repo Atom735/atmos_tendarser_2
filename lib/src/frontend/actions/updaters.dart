@@ -8,6 +8,9 @@ import '../frontend_app.dart';
 
 extension FrontendAppXUpdaters on FrontendApp {
   Future<void> spawnNewUpdater(DateTime start, DateTime end) async {
+    if (!isOnline) {
+      throw UnsupportedError('Needs to connect to server');
+    }
     final resp = await connection.request(
       MsgUpdaterSpawnNewEtpGpb(connection.mewMsgId, start, end),
     );
@@ -18,6 +21,9 @@ extension FrontendAppXUpdaters on FrontendApp {
   }
 
   Future<int> getUpdaterLength() async {
+    if (!isOnline) {
+      return db.tableUpdaters.sqlSelectCount();
+    }
     final resp = await connection.request(
       MsgUpdaterLengthRequest(connection.mewMsgId),
     );
@@ -31,6 +37,9 @@ extension FrontendAppXUpdaters on FrontendApp {
       int offset, int length, UpdaterDataSortType sort, bool asc) async {
     final noCache = this.noCache;
     final table = db.tableUpdaters;
+    if (!isOnline) {
+      return db.getUpdaterInterval(offset, length, sort, asc);
+    }
     var resp = await connection.request(
       MsgUpdaterGetInterval(
         connection.mewMsgId,
@@ -69,17 +78,25 @@ extension FrontendAppXUpdaters on FrontendApp {
     if (resp is! MsgUpdaterResponse) {
       throw InvalidateMsg(resp);
     }
-    final newIds = resp.data.map((e) => e.settings.id).toList();
-    final newIdsContains =
-        table.sqlSelectByIds(newIds).map((e) => e.settings.id).toList();
-    newIds.removeWhere(newIdsContains.contains);
-    for (final item in newIdsContains) {
-      db.updateUpdaterStates(
-          resp.data.firstWhere((e) => e.state.id == item).state);
-    }
-
-    table.sqlInsert(resp.data.where((e) => newIds.contains(e.state.id)));
+    db.upsertUpdaters(resp.data);
     datas.addAll(resp.data);
     return ids.map((e) => datas.firstWhere((d) => d.settings.id == e)).toList();
+  }
+
+  Future<List<UpdaterData>> getUpdaterRefresh() async {
+    if (!isOnline) {
+      throw UnsupportedError('Needs to connect to server');
+    }
+    final table = db.tableUpdaters;
+    final resp = await connection.request(
+      MsgUpdaterGetRequest(connection.mewMsgId, table.sql.select('''
+        SELECT max(${table.vColumnsTimestamp.name}) FROM ${table.name}
+        ''').rows.first as int? ?? 0),
+    );
+    if (resp is! MsgUpdaterResponse) {
+      throw InvalidateMsg(resp);
+    }
+    db.upsertUpdaters(resp.data);
+    return resp.data;
   }
 }

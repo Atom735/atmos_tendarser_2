@@ -38,5 +38,28 @@ class DatabaseApp {
     );
   }
 
+  List<UpdaterData> getUpdaterInterval(
+      int offset, int length, UpdaterDataSortType sort, bool asc) {
+    late final String order;
+    switch (sort) {
+      case UpdaterDataSortType.id:
+        order = tableUpdaters.columnId.name;
+        break;
+      case UpdaterDataSortType.timestamp:
+        order = tableUpdaters.vColumnsTimestamp.name;
+        break;
+      case UpdaterDataSortType.start:
+        order = tableUpdaters.vColumnsStart.name;
+        break;
+      case UpdaterDataSortType.end:
+        order = tableUpdaters.vColumnsEnd.name;
+        break;
+    }
+    return tableUpdaters.sqlSelect('''
+          WHERE ORDER BY $order ${asc ? 'ASC' : 'DESC'}
+          LIMIT $length OFFSET $offset
+        ''').toList();
+  }
+
   void dispose() => sql.dispose();
 }

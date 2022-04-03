@@ -17,6 +17,7 @@ import '../messages/msg_db_get_length_response.dart';
 import '../messages/msg_error.dart';
 import 'backend_app_logger.dart';
 import 'backend_connection.dart';
+import 'handlers/updaters.dart';
 import 'updater_etpgpb.dart';
 import 'web_client.dart';
 
@@ -57,6 +58,7 @@ class BackendApp {
   }
 
   bool handleMsg(IMsgConnection connection, IMsg msg) {
+    if (handleUpdatersMsg(this, connection, msg)) return true;
     // if (msg is MsgSyncRequest) {
     //   DatabaseAppServerSyncProcess(db, connection, msg);
     //   return true;
