@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 
 import 'theme_color_sheme.dart';
 
-final themeTypography =
+final kThemeTypography =
     Typography.material2018(platform: defaultTargetPlatform);
 
-const themePageTransitions = PageTransitionsTheme(builders: {
+const kThemePageTransitions = PageTransitionsTheme(builders: {
   TargetPlatform.windows: ZoomPageTransitionsBuilder(),
 });
 
-const themeDivider = DividerThemeData(
+const kThemeDivider = DividerThemeData(
   indent: 0,
   endIndent: 0,
   thickness: 0,
   space: 0,
 );
 
-const themeScrollbar = ScrollbarThemeData(
+const kThemeScrollbar = ScrollbarThemeData(
   crossAxisMargin: 0,
   interactive: true,
   isAlwaysShown: true,
@@ -28,21 +28,21 @@ const themeScrollbar = ScrollbarThemeData(
 );
 
 final themeDataDark = ThemeData.from(
-  colorScheme: colorSchemeDark,
-  textTheme: themeTypography.white,
+  colorScheme: kThemeColorSchemeDark,
+  textTheme: kThemeTypography.white,
 ).copyWith(
-  typography: themeTypography,
-  dividerTheme: themeDivider,
-  scrollbarTheme: themeScrollbar,
-  pageTransitionsTheme: themePageTransitions,
+  typography: kThemeTypography,
+  dividerTheme: kThemeDivider,
+  scrollbarTheme: kThemeScrollbar,
+  pageTransitionsTheme: kThemePageTransitions,
 );
 
 final themeDataLight = ThemeData.from(
-  colorScheme: colorSchemeLight,
-  textTheme: themeTypography.black,
+  colorScheme: kThemeColorSchemeLight,
+  textTheme: kThemeTypography.black,
 ).copyWith(
-  typography: themeTypography,
-  dividerTheme: themeDivider,
-  scrollbarTheme: themeScrollbar,
-  pageTransitionsTheme: themePageTransitions,
+  typography: kThemeTypography,
+  dividerTheme: kThemeDivider,
+  scrollbarTheme: kThemeScrollbar,
+  pageTransitionsTheme: kThemePageTransitions,
 );

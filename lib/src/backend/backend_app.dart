@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:io';
 
 import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
-import 'package:atmos_logger/atmos_logger_io.dart';
+import 'package:logging/logging.dart';
 
 import '../data/data_tender_db_etpgpb.dart';
 import '../database/database_app_server.dart';
@@ -16,7 +15,8 @@ import '../messages/msg_db_get_interval_response.dart';
 import '../messages/msg_db_get_length_request.dart';
 import '../messages/msg_db_get_length_response.dart';
 import '../messages/msg_error.dart';
-import 'backend_web_socket_connection.dart';
+import 'backend_app_logger.dart';
+import 'backend_connection.dart';
 import 'updater_etpgpb.dart';
 import 'web_client.dart';
 
@@ -26,10 +26,10 @@ class BackendApp {
   int get version => 1;
 
   final db = DatabaseAppServer('backend.db');
-  final Logger logger = LoggerConsole(LoggerFile(File('backend.log')));
+  final Logger logger = Logger('server');
   late ServerSocket server;
   final connections = <IMsgConnection>[];
-  late final IWebClient webClient = WebClient(logger);
+  late final IWebClient webClient = WebClient();
   final updaters = <UpdaterEtpGpb>[];
 
   void _updaterStateUpdate(UpdaterEtpGpb updater) {
@@ -220,12 +220,12 @@ class BackendApp {
   // }
 
   void handleNewConnection(Socket socket) {
-    connections.add(BackendWebSocketConnection(
-        socket, version, logger, handleMsg, connections.remove));
+    connections.add(
+        BackendMsgConnection(socket, version, handleMsg, connections.remove));
   }
 
   void handleServerError(Object error, StackTrace stackTrace) {
-    logger.fatal('Server error', 'Error: $error\n$stackTrace');
+    logger.severe('Server error', 'Error: $error\n$stackTrace');
     server.close();
     dispose();
   }
@@ -237,6 +237,7 @@ class BackendApp {
   }
 
   Future<void> run(List<String> args) async {
+    backendAppLoggerAttach();
     logger.info('Server Start');
     await init();
     server = await ServerSocket.bind(InternetAddress.anyIPv4, 49735);
@@ -264,5 +265,6 @@ class BackendApp {
     await webClient.dispose();
     db.dispose();
     logger.info('Modules disposed');
+    backendAppLoggerClose();
   }
 }

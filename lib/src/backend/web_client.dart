@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
-import 'package:atmos_logger/atmos_logger.dart';
+import 'package:logging/logging.dart';
 
 import '../common/common_stop_watch_ticks.dart';
 import '../common/common_web_constants.dart';
@@ -14,10 +14,10 @@ import '../interfaces/i_fetching_params.dart';
 import '../interfaces/i_web_client.dart';
 
 class WebClient implements IWebClient {
-  WebClient(this.logger);
+  WebClient();
   final _tasks = <IWebClientTask>[];
 
-  final Logger logger;
+  final Logger logger = Logger('WebClient');
 
   final _httpClient = HttpClient()
     ..autoUncompress = false
@@ -47,7 +47,7 @@ class WebClient implements IWebClient {
     final completerCancel = task.completerCancel;
     // ignore: close_sinks
     final controllerSatus = task.controllerSatus;
-    logger.trace('Connecting$ld');
+    logger.finer('Connecting$ld');
     File? file;
     if (params is IFetchingParamsWithData) {
       file = File('.req/${uri.host},${params.data.values.join(',')}.bin');
@@ -116,7 +116,7 @@ class WebClient implements IWebClient {
       final sw = Stopwatch()..start();
       final req = await _httpClient.openUrl(params.method.canonical, uri);
       final tConnecting = StopWatchTicks.fromSw(sw);
-      logger.trace('Connected[$tConnecting]$ld');
+      logger.finer('Connected[$tConnecting]$ld');
 
       if (completerCancel.isCompleted) return;
       controllerSatus.add(WebClientTaskStatus.sending);
@@ -140,7 +140,7 @@ class WebClient implements IWebClient {
       sw.reset();
       await req.flush();
       final tSending = StopWatchTicks.fromSw(sw);
-      logger.trace('Sended[$tSending]$ld', req.headers.toString());
+      logger.finer('Sended[$tSending]$ld', req.headers);
 
       if (completerCancel.isCompleted) return;
       controllerSatus.add(WebClientTaskStatus.waiting);
@@ -158,8 +158,8 @@ class WebClient implements IWebClient {
       final tDownloading = StopWatchTicks.fromSw(sw);
       // sw.stop();
       final bytes = bb.takeBytes();
-      logger.trace('Downloaded[$tDownloading]$ld ${bytes.length} bytes',
-          res.headers.toString());
+      logger.finer(
+          'Downloaded[$tDownloading]$ld ${bytes.length} bytes', res.headers);
       final gzip =
           res.headers[HttpHeaders.contentEncodingHeader]?.first == 'gzip';
       final mime =

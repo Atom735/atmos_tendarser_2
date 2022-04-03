@@ -130,7 +130,7 @@ class _WConnectingScreenState extends State<WConnectingScreen>
                   child: CircularProgressIndicator(strokeWidth: 8),
                 ),
                 Text(
-                  'Подключение к [${app.connection.adress}]...',
+                  'Подключение к [${app.connection.remoteAdress}]...',
                   style: Theme.of(context).typography.englishLike.displayLarge,
                 ),
               ],

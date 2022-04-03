@@ -24,13 +24,14 @@ class MessagesDecoder extends Converter<Uint8List, IMsg> {
   IMsg convert(Uint8List input) {
     final reader = BinaryReader(input);
     final type = reader.readSize();
+    reader.offset = 0;
     switch (type) {
       case MsgHandshake.typeId:
-        return MsgHandshake.decode(reader);
+        return MsgHandshake.read(reader);
       case MsgError.typeId:
-        return MsgError.decode(reader);
+        return MsgError.read(reader);
       case MsgDone.typeId:
-        return MsgDone.decode(reader);
+        return MsgDone.read(reader);
       case MsgDbGetLengthRequest.typeId:
         return MsgDbGetLengthRequest.decode(reader);
       case MsgDbGetLengthResponse.typeId:
@@ -42,7 +43,7 @@ class MessagesDecoder extends Converter<Uint8List, IMsg> {
       case MsgDbGetIntervalIds.typeId:
         return MsgDbGetIntervalIds.decode(reader);
       default:
-        return MsgUnknown.decode(type, reader);
+        return MsgUnknown.read(reader);
     }
   }
 }

@@ -9,7 +9,9 @@ import '../interfaces/i_msg.dart';
 class MsgDone implements IMsg {
   const MsgDone(this.id);
 
-  factory MsgDone.decode(BinaryReader reader) {
+  factory MsgDone.read(BinaryReader reader) {
+    final type = reader.readSize();
+    assert(type == typeId, 'Not equals typeId');
     final id = reader.readSize();
     return MsgDone(id);
   }
@@ -20,10 +22,9 @@ class MsgDone implements IMsg {
   final int id;
 
   @override
-  Uint8List get toBytes => (BinaryWriter()
-        ..writeSize(typeId)
-        ..writeSize(id))
-      .takeBytes();
+  BinaryWriter write(BinaryWriter writer) => writer
+    ..writeSize(typeId)
+    ..writeSize(id);
 
   @override
   String toString() => 'MsgDone(id=$id)';

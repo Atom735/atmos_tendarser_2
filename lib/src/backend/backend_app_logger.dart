@@ -1,16 +1,23 @@
 import 'dart:io';
 
+import 'package:atmos_database/atmos_database.dart';
 import 'package:atmos_logger/atmos_logger_io.dart';
-import 'package:flutter/material.dart';
+
 import 'package:logging/logging.dart' as logging;
 
-import 'src/frontend/frontend_app.dart';
-import 'src/widgets/w_app.dart';
-import 'src/widgets/wp_app.dart';
+void backendAppLoggerAttach() {
+  logging.Logger.root.level = logging.Level.ALL;
+  logging.Logger.root.onRecord.listen(_logRecord);
+}
 
-final Logger logger = LoggerConsole(LoggerFile(File('frontend.log')));
+void backendAppLoggerClose() {
+  _loggerAtmos.close();
+}
 
-void onLogRecord(logging.LogRecord record) {
+final Logger _loggerAtmos =
+    LoggerConsole(LoggerFile(File('logs.backend.${DateTime.now()}.log')));
+
+void _logRecord(logging.LogRecord record) {
   late final int logLevel;
   if (record.level.value <= logging.Level.FINE.value) {
     logLevel = LogLevel.trace;
@@ -34,17 +41,11 @@ void onLogRecord(logging.LogRecord record) {
       ..write('\n\n')
       ..write(record.stackTrace.toString());
   }
-  logger.log(LogData(
+  _loggerAtmos.log(LogData(
     record.time,
     logLevel,
     record.loggerName,
     record.message,
     sb.toString(),
   ));
-}
-
-void main(List<String> args) {
-  WidgetsFlutterBinding.ensureInitialized();
-  final app = FrontendApp()..run(args);
-  runApp(WpApp(app, child: const WApp()));
 }

@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
 
 abstract class IMsg {
   IMsg._();
@@ -6,5 +6,5 @@ abstract class IMsg {
   /// Уникальный идентификатор сообщения
   int get id;
 
-  Uint8List get toBytes;
+  BinaryWriter write(BinaryWriter writer);
 }

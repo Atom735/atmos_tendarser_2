@@ -12,28 +12,48 @@ class WSwitchThemeModeButton extends StatefulWidget {
 
 class _WSwitchThemeModeButtonState extends State<WSwitchThemeModeButton>
     with WmApp, WmMisc {
-  ValueNotifier<bool>? vnThemeModeDark;
+  ValueNotifier<ThemeMode> get vnThemeMode => settings.vnThemeMode;
 
   @override
   void onAppGetted() {
     super.onAppGetted();
-    vnThemeModeDark = app.vnThemeModeDark..addListener(updateState);
+    vnThemeMode.addListener(updateState);
   }
 
   @override
   void dispose() {
-    vnThemeModeDark?.removeListener(updateState);
+    vnThemeMode.removeListener(updateState);
     super.dispose();
   }
 
-  void handleSwitchThemeMode() =>
-      vnThemeModeDark!.value = !vnThemeModeDark!.value;
+  void handleSwitchThemeMode() {
+    switch (vnThemeMode.value) {
+      case ThemeMode.system:
+        vnThemeMode.value = ThemeMode.light;
+        break;
+      case ThemeMode.light:
+        vnThemeMode.value = ThemeMode.dark;
+        break;
+      case ThemeMode.dark:
+        vnThemeMode.value = ThemeMode.system;
+        break;
+    }
+  }
+
+  IconData get _iconData {
+    switch (vnThemeMode.value) {
+      case ThemeMode.system:
+        return Icons.light_mode;
+      case ThemeMode.light:
+        return Icons.dark_mode;
+      case ThemeMode.dark:
+        return Icons.mode_standby;
+    }
+  }
 
   @override
   Widget build(BuildContext context) => IconButton(
         onPressed: handleSwitchThemeMode,
-        icon: Icon(
-          vnThemeModeDark!.value ? Icons.light_mode : Icons.dark_mode,
-        ),
+        icon: Icon(_iconData),
       );
 }

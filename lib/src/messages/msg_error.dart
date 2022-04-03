@@ -9,7 +9,9 @@ import '../interfaces/i_msg.dart';
 class MsgError implements IMsg {
   const MsgError(this.id, this.error);
 
-  factory MsgError.decode(BinaryReader reader) {
+  factory MsgError.read(BinaryReader reader) {
+    final type = reader.readSize();
+    assert(type == typeId, 'Not equals typeId');
     final id = reader.readSize();
     final error = reader.readString();
     return MsgError(id, error);
@@ -22,11 +24,10 @@ class MsgError implements IMsg {
   final String error;
 
   @override
-  Uint8List get toBytes => (BinaryWriter()
-        ..writeSize(typeId)
-        ..writeSize(id)
-        ..writeString(error))
-      .takeBytes();
+  BinaryWriter write(BinaryWriter writer) => writer
+    ..writeSize(typeId)
+    ..writeSize(id)
+    ..writeString(error);
 
   @override
   String toString() => 'MsgError(id=$id, error="$error")';

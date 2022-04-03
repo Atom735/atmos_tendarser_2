@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-const colorSchemeSeed = Color(0xFF6750A4);
+const kThemeColorSchemeSeed = Color(0xFF6750A4);
 
-const colorSchemeLight = ColorScheme(
+const kThemeColorSchemeLight = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF6F43BF),
   onPrimary: Color(0xFFFFFFFF),
@@ -33,7 +33,7 @@ const colorSchemeLight = ColorScheme(
   shadow: Color(0xFF000000),
 );
 
-const colorSchemeDark = ColorScheme(
+const kThemeColorSchemeDark = ColorScheme(
   brightness: Brightness.dark,
   primary: Color(0xFFD4BAFF),
   onPrimary: Color(0xFF3F008E),

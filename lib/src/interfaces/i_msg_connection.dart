@@ -24,7 +24,10 @@ abstract class IMsgConnectionClient implements IMsgConnection {
   IMsgConnectionClient._();
 
   /// Адресс подключения
-  String get adress;
+  String get remoteAdress;
+
+  /// Порт подключения
+  int get remotePort;
 
   /// Состояние подключения код состояния
   ConnectionStatus get statusCode;
@@ -36,7 +39,7 @@ abstract class IMsgConnectionClient implements IMsgConnection {
   Stream<IMsgConnectionClient> get statusUpdates;
 
   /// Переподключение (Вернётся успешно только когда подклюились)
-  Future<void> reconnect();
+  Future<void> reconnect([String? adress, int? port]);
 
   void dispose();
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../routes/route_parser.dart';
 import '../routes/router_delegate.dart';
+import '../theme/theme_color_sheme.dart';
 import '../theme/theme_themes.dart';
 import 'wm_app.dart';
 import 'wm_misc.dart';
@@ -17,7 +18,7 @@ class WAppState extends State<WApp> with WmApp, WmMisc {
   @override
   void onAppGetted() {
     super.onAppGetted();
-    app.vnThemeModeDark.addListener(updateState);
+    settings.vnThemeMode.addListener(updateState);
   }
 
   @override
@@ -30,15 +31,13 @@ class WAppState extends State<WApp> with WmApp, WmMisc {
   Widget build(BuildContext context) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
         locale: const Locale('ru'),
-        color: (app.vnThemeModeDark.value ? themeDataDark : themeDataLight)
-            .colorScheme
-            .primary,
+        color: kThemeColorSchemeSeed,
         theme: themeDataLight,
         darkTheme: themeDataDark,
-        themeMode: app.vnThemeModeDark.value ? ThemeMode.dark : ThemeMode.light,
+        themeMode: settings.vnThemeMode.value,
         routeInformationParser: const RouteParser(),
         routerDelegate: router as MyRouterDelegate,
-        restorationScopeId: 'tendarser',
+        restorationScopeId: '#tendarser',
         title: 'Atmos Tendarser',
       );
 }

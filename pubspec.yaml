@@ -19,7 +19,10 @@ dependencies:
     sdk: flutter
   html: ^0.15.0
   intl: ^0.17.0
+  logging: ^1.0.2
   meta: ^1.7.0
+  path: ^1.8.0
+  path_provider: ^2.0.9
   source_span: ^1.8.1
   sqlite3: ^1.5.1
   stream_channel: ^2.1.0

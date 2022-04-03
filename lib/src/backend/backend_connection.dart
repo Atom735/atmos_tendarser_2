@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
-import 'package:atmos_logger/atmos_logger_io.dart';
+import 'package:logging/logging.dart';
 
 import '../common/common_connection.dart';
 import '../interfaces/i_msg.dart';
@@ -13,24 +13,21 @@ import '../messages/msg_done.dart';
 import '../messages/msg_error.dart';
 import '../messages/msg_handshake.dart';
 
-class BackendWebSocketConnection extends CommonMsgConnection
-    implements IMsgConnection {
-  BackendWebSocketConnection(
+class BackendMsgConnection extends CommonMsgConnection {
+  BackendMsgConnection(
     this.ws,
     this.version,
-    this.logger,
     this.handler,
     this.onClose,
   ) {
-    logger.debug('$this: new connection');
+    logger.info('new connection');
     ws.listen(handleDataRaw, onDone: handleDone, onError: handleError);
   }
 
   /// Версия приложения
-  @override
   final int version;
   @override
-  final Logger logger;
+  late final Logger logger = Logger(toString());
   final bool Function(IMsgConnection connection, IMsg msg) handler;
   final void Function(IMsgConnection connection) onClose;
   @override
@@ -40,15 +37,15 @@ class BackendWebSocketConnection extends CommonMsgConnection
   @override
   Future<void> handleData(Uint8List request) async {
     try {
-      logger.debug('recived: ${request.length}');
+      logger.fine('recived: ${request.length}');
       final msg = const MessagesDecoder().convert(request);
-      logger.debug('WebSocket: New MSG', msg.toString());
+      logger.fine('new msg', msg);
       requestsCompleters.remove(msg.id)?.complete(msg);
       streamControllers[msg.id]?.add(msg);
       if (msg is MsgDone) {
         await streamControllers.remove(msg.id)?.close();
       }
-      logger.debug('$this: New MSG', msg.toString());
+      logger.fine('new msg', msg);
       if (!handshaked) {
         if (msg is! MsgHandshake) {
           send(MsgError(msg.id, 'Needs to handshake'));
@@ -75,12 +72,12 @@ class BackendWebSocketConnection extends CommonMsgConnection
   }
 
   void handleDone() {
-    logger.debug('$this: done');
+    logger.info('done');
     close();
   }
 
   void handleError(Object? e) {
-    logger.debug('$this: error', e.toString());
+    logger.severe('error', e.toString());
     close();
   }
 
@@ -89,9 +86,6 @@ class BackendWebSocketConnection extends CommonMsgConnection
     super.close();
     onClose(this);
   }
-
-  @override
-  String toString() => 'WebSocket[${ws.hashCode.toRadixString(16)}]';
 
   int _id = 2;
 

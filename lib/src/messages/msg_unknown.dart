@@ -9,7 +9,8 @@ import '../interfaces/i_msg.dart';
 class MsgUnknown implements IMsg {
   const MsgUnknown(this.type, this.id, this.data);
 
-  factory MsgUnknown.decode(int type, BinaryReader reader) {
+  factory MsgUnknown.read(BinaryReader reader) {
+    final type = reader.readSize();
     final id = reader.readSize();
     final length = reader.peek;
     final data = reader.readListUint8(size: length);
@@ -24,11 +25,10 @@ class MsgUnknown implements IMsg {
   final Uint8List data;
 
   @override
-  Uint8List get toBytes => (BinaryWriter()
-        ..writeSize(type)
-        ..writeSize(id)
-        ..writeListUint8(data, size: data.length))
-      .takeBytes();
+  BinaryWriter write(BinaryWriter writer) => writer
+    ..writeSize(type)
+    ..writeSize(id)
+    ..writeListUint8(data, size: data.length);
 
   @override
   String toString() =>

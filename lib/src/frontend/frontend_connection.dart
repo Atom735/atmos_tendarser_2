@@ -1,39 +1,38 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:atmos_logger/src/logger.dart';
+import 'package:logging/logging.dart';
 
 import '../common/common_connection.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../messages/msg_handshake.dart';
-import 'frontend_app.dart';
 
-class FrontendWebSocketConnection extends CommonMsgConnection
+class FrontendMsgConnection extends CommonMsgConnection
     implements IMsgConnectionClient {
-  FrontendWebSocketConnection(this.app);
-
-  final FrontendApp app;
-  @override
-  Logger get logger => app.logger;
+  FrontendMsgConnection();
 
   @override
-  int get version => 1;
+  late String remoteAdress;
+
+  @override
+  late int remotePort;
+
+  @override
+  final Logger logger = Logger('Connection');
+
   @override
   late Socket ws;
 
   int remoteVersion = 1;
 
   @override
-  String get adress => app.serverAdress;
-  @override
   ConnectionStatus statusCode = ConnectionStatus.unconnected;
   @override
   String statusMsg = '';
   @override
-  Stream<FrontendWebSocketConnection> get statusUpdates => sc.stream;
+  Stream<FrontendMsgConnection> get statusUpdates => sc.stream;
 
-  final sc =
-      StreamController<FrontendWebSocketConnection>.broadcast(sync: true);
+  final sc = StreamController<FrontendMsgConnection>.broadcast(sync: true);
 
   void _status(ConnectionStatus code, [String message = '']) {
     statusCode = code;
@@ -47,18 +46,24 @@ class FrontendWebSocketConnection extends CommonMsgConnection
   int get mewMsgId => _id += 2;
 
   @override
-  Future<void> reconnect() async {
+  Future<void> reconnect([String? adress, int? port]) async {
     try {
-      app.logger.debug('WebSocket: reconnect');
+      if (statusCode == ConnectionStatus.connected) {
+        close();
+      }
+      remoteAdress = adress ?? remoteAdress;
+      remotePort = port ?? remotePort;
+      logger.info('reconnect');
       _status(ConnectionStatus.connecting);
-      ws = await Socket.connect(adress, 49735);
-      app.logger.debug('WebSocket: connected');
+      ws = await Socket.connect(remoteAdress, remotePort);
+      logger.info('connected');
       ws.listen(handleDataRaw, onDone: handleDone, onError: handleError);
-      final v = await request(MsgHandshake(mewMsgId, app.version));
+      final v = await request(MsgHandshake(mewMsgId, 1));
       remoteVersion = (v as MsgHandshake).version;
-      app.logger.debug('WebSocket: handshaked');
+      logger.info('handshaked');
       _status(ConnectionStatus.connected);
     } on Object catch (e) {
+      logger.severe('erorr while connecting', e);
       _status(
         ConnectionStatus.error,
         'Оишбка при подключении:\n$e',
@@ -67,13 +72,13 @@ class FrontendWebSocketConnection extends CommonMsgConnection
   }
 
   void handleDone() {
-    app.logger.debug('WebSocket: done');
+    logger.info('done');
     _status(ConnectionStatus.unconnected);
     close();
   }
 
   void handleError(Object? e) {
-    app.logger.debug('WebSocket: error', e.toString());
+    logger.severe('error', e);
     _status(ConnectionStatus.error, e.toString());
     close();
   }

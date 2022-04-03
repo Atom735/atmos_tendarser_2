@@ -1,51 +1,44 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:atmos_logger/atmos_logger_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:logging/logging.dart';
 import 'package:yaml/yaml.dart';
 
 import '../database/database_app_client.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_router.dart';
 import '../routes/router_delegate.dart';
+import 'frontend_app_logger.dart';
+import 'frontend_app_settings.dart';
 import 'frontend_app_tender_list.dart';
 import 'frontend_app_updates_list.dart';
-import 'frontend_web_socket_connection.dart';
+import 'frontend_connection.dart';
 
 /// Интерфейс клиентского приложения
 class FrontendApp {
+  FrontendApp() {}
+
   /// Версия приложения
   int get version => 1;
 
   final db = DatabaseAppClient('frontend.db');
-
-  final Logger logger = LoggerConsole(LoggerFile(File('frontend.log')));
+  final settings = FrontendAppSettings();
+  late final IMsgConnectionClient connection = FrontendMsgConnection();
   late final IRouter router = MyRouterDelegate(this);
-  final vnThemeModeDark = ValueNotifier(true);
-  late String serverAdress;
-  late final IMsgConnectionClient connection =
-      FrontendWebSocketConnection(this);
-  late final updatesList = FrontendAppUpdatesList(this);
-  late final tenderList = FrontendAppTenderList(this);
+  final Logger logger = Logger('app');
 
   bool get isOnline => connection.statusCode == ConnectionStatus.connected;
 
-  final _settingFile = rootBundle.loadString('frontend.settings.yaml');
-  late StreamSubscription<FileSystemEvent> _settingFileSS;
-  Future<void> _onSettingsChanged() async {
-    final yaml = loadYamlDocument(
-      await _settingFile,
-    ).contents as YamlMap;
-
-    vnThemeModeDark.value = yaml['theme_mode'] == 'dark';
-    serverAdress = yaml['server_adress'] ?? 'example.com';
-  }
-
-  Future<void> run(List<String> args) async {
+  void run(List<String> args) {
+    frontendAppLoggerAttach();
     logger.info('Start');
-    await init();
+    connection.statusUpdates.listen(onConnected);
+    connection.reconnect(
+      settings.vnServerAdress.value,
+      settings.vnServerPort.value,
+    );
     logger.info('Initialized');
     (router as MyRouterDelegate).handleInitizlizngEnd();
   }
@@ -54,19 +47,12 @@ class FrontendApp {
     if (connection.statusCode == ConnectionStatus.connected) {}
   }
 
-  Future<void> init() async {
-    _onSettingsChanged();
-    unawaited(connection.reconnect());
-    connection.statusUpdates.listen(onConnected);
-  }
-
   Future<void> dispose() async {
-    await _settingFileSS.cancel();
+    settings.dispose();
     connection.dispose();
-    await (connection as FrontendWebSocketConnection).sc.close();
-    vnThemeModeDark.dispose();
     (router as MyRouterDelegate).dispose();
     db.dispose();
     logger.info('Disposed');
+    frontendAppLoggerClose();
   }
 }
