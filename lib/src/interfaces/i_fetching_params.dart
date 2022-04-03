@@ -10,6 +10,7 @@ import '../common/common_web_constants.dart';
 /// - `${{name:type}}`
 /// - `${{name:type(params)}}`
 abstract class IFetchingParams {
+  /// For implement only
   IFetchingParams._();
 
   /// Уникальный идентификатор этих параметров

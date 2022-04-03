@@ -3,6 +3,7 @@ import 'dart:async';
 import 'i_msg.dart';
 
 abstract class IMsgConnection {
+  /// For implement only
   IMsgConnection._();
 
   /// Генератор айди для новых сообщений (чётные у сервеа, нечётные у клиента)
@@ -21,6 +22,7 @@ abstract class IMsgConnection {
 }
 
 abstract class IMsgConnectionClient implements IMsgConnection {
+  /// For implement only
   IMsgConnectionClient._();
 
   /// Адресс подключения

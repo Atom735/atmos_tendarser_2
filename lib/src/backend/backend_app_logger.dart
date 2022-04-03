@@ -1,8 +1,6 @@
 import 'dart:io';
 
-import 'package:atmos_database/atmos_database.dart';
 import 'package:atmos_logger/atmos_logger_io.dart';
-
 import 'package:logging/logging.dart' as logging;
 
 void backendAppLoggerAttach() {

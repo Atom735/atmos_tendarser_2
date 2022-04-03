@@ -1,4 +1,5 @@
 abstract class IDataInterval<T> {
+  /// For implement only
   IDataInterval._();
   int get offset;
   int get length;
@@ -19,6 +20,7 @@ abstract class IDataInterval<T> {
 }
 
 abstract class IDataIntervals<T> {
+  /// For implement only
   IDataIntervals._();
 
   /// Стрим обновления этих интервалов

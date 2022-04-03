@@ -14,6 +14,8 @@ import 'msg_done.dart';
 import 'msg_error.dart';
 import 'msg_handshake.dart';
 import 'msg_unknown.dart';
+import 'msg_updater_get.dart';
+import 'msg_updater_spawn_new_etpgpb.dart';
 
 @immutable
 class MessagesDecoder extends Converter<Uint8List, IMsg> {
@@ -32,16 +34,33 @@ class MessagesDecoder extends Converter<Uint8List, IMsg> {
         return MsgError.read(reader);
       case MsgDone.typeId:
         return MsgDone.read(reader);
-      case MsgDbGetLengthRequest.typeId:
-        return MsgDbGetLengthRequest.decode(reader);
-      case MsgDbGetLengthResponse.typeId:
-        return MsgDbGetLengthResponse.decode(reader);
-      case MsgDbGetIntervalRequest.typeId:
-        return MsgDbGetIntervalRequest.decode(reader);
-      case MsgDbGetIntervalResponse.typeId:
-        return MsgDbGetIntervalResponse.decode(reader);
-      case MsgDbGetIntervalIds.typeId:
-        return MsgDbGetIntervalIds.decode(reader);
+
+      case MsgUpdaterSpawnNewEtpGpb.typeId:
+        return MsgUpdaterSpawnNewEtpGpb.read(reader);
+
+      case MsgUpdaterGetRequest.typeId:
+        return MsgUpdaterGetRequest.read(reader);
+      case MsgUpdaterResponse.typeId:
+        return MsgUpdaterResponse.read(reader);
+      case MsgUpdaterGetInterval.typeId:
+        return MsgUpdaterGetInterval.read(reader);
+      case MsgUpdaterInterval.typeId:
+        return MsgUpdaterInterval.read(reader);
+      case MsgUpdaterLengthRequest.typeId:
+        return MsgUpdaterLengthRequest.read(reader);
+      case MsgUpdaterLengthResponse.typeId:
+        return MsgUpdaterLengthResponse.read(reader);
+
+      // case MsgDbGetLengthRequest.typeId:
+      //   return MsgDbGetLengthRequest.decode(reader);
+      // case MsgDbGetLengthResponse.typeId:
+      //   return MsgDbGetLengthResponse.decode(reader);
+      // case MsgDbGetIntervalRequest.typeId:
+      //   return MsgDbGetIntervalRequest.decode(reader);
+      // case MsgDbGetIntervalResponse.typeId:
+      //   return MsgDbGetIntervalResponse.decode(reader);
+      // case MsgDbGetIntervalIds.typeId:
+      //   return MsgDbGetIntervalIds.read(reader);
       default:
         return MsgUnknown.read(reader);
     }

@@ -8,7 +8,7 @@ import '../common/common_date_time.dart';
 import '../data/fetching_params.dart';
 import '../data/fetching_params_etpgpb.dart';
 import '../data/updater_data.dart';
-import '../database/database_app_server.dart';
+import '../database/server/database_app_server.dart';
 import '../interfaces/i_web_client.dart';
 
 class UpdaterEtpGpb extends UpdaterData {

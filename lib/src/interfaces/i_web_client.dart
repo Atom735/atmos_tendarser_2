@@ -3,6 +3,7 @@ import 'i_fetching_params.dart';
 
 /// Интерфейс веб клиента.
 abstract class IWebClient {
+  /// For implement only
   IWebClient._();
 
   Future<void> dispose();
@@ -13,6 +14,7 @@ abstract class IWebClient {
 
 /// Выполняемая задача веб клиента.
 abstract class IWebClientTask {
+  /// For implement only
   IWebClientTask._();
 
   /// Веб клиент порадивший данную задачу.

@@ -1,12 +1,35 @@
+import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
 import 'package:atmos_database/atmos_database.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import '../common/common_date_time.dart';
+import '../common/common_misc.dart';
+import '../interfaces/i_writable.dart';
 
-class UpdaterData {
+/// Типы сортировки списка [UpdaterData]
+enum UpdaterDataSortType {
+  /// Сориторвка по [UpdaterState.id] записей
+  id,
+
+  /// Сориторвка по [UpdaterState.timestamp] записей
+  timestamp,
+
+  /// Сориторвка по [UpdaterDataSettings.start] записей
+  start,
+
+  /// Сориторвка по [UpdaterDataSettings.end] записей
+  end,
+}
+
+class UpdaterData implements IWritable {
   UpdaterData(this.settings, this.state);
   UpdaterData.v(MyDateTime start, MyDateTime end)
       : this(UpdaterDataSettings.v(start, end), UpdaterState.v(start));
+  factory UpdaterData.read(BinaryReader reader) {
+    final settings = UpdaterDataSettings.read(reader);
+    final state = UpdaterState.read(reader);
+    return UpdaterData(settings, state);
+  }
 
   final UpdaterDataSettings settings;
   final UpdaterState state;
@@ -22,12 +45,45 @@ class UpdaterData {
 
   @override
   String toString() => 'UpdaterData(settings: $settings, state: $state)';
+
+  @override
+  BinaryWriter write(BinaryWriter writer) {
+    settings.write(writer);
+    state.write(writer);
+    return writer;
+  }
+
+  static void listWriter(UpdaterData v, int index, BinaryWriter writer) =>
+      v.write(writer);
+
+  // ignore: prefer_constructors_over_static_methods
+  static UpdaterData listReader(int index, BinaryReader reader) =>
+      UpdaterData.read(reader);
 }
 
-class UpdaterDataSettings {
+class UpdaterDataSettings implements IWritable {
   UpdaterDataSettings(this.id, this.timestamp, this.start, this.end);
   UpdaterDataSettings.v(MyDateTime start, MyDateTime end)
       : this(0, 0, start, end);
+  factory UpdaterDataSettings.read(BinaryReader reader) {
+    final id = reader.readSize();
+    final timestamp = reader.readSize();
+    final start = DateTime.fromMillisecondsSinceEpoch(
+      reader.readSize() * kMillisecondsInDay,
+      isUtc: true,
+    );
+
+    final end = DateTime.fromMillisecondsSinceEpoch(
+      reader.readSize() * kMillisecondsInDay,
+      isUtc: true,
+    );
+    return UpdaterDataSettings(
+      id,
+      timestamp,
+      MyDateTime(start, MyDateTimeQuality.day),
+      MyDateTime(end, MyDateTimeQuality.day),
+    );
+  }
 
   final int id;
   final int timestamp;
@@ -39,14 +95,42 @@ class UpdaterDataSettings {
   @override
   String toString() =>
       '''UpdaterDataSettings(id: $id, timestamp: $timestampDt, start: $start, end: $end)''';
+
+  @override
+  BinaryWriter write(BinaryWriter writer) => writer
+    ..writeSize(id)
+    ..writeSize(timestamp)
+    ..writeSize(start.dt.millisecondsSinceEpoch ~/ kMillisecondsInDay)
+    ..writeSize(end.dt.millisecondsSinceEpoch ~/ kMillisecondsInDay);
 }
 
-class UpdaterState {
+class UpdaterState implements IWritable {
   UpdaterState(this.id, this.timestamp, this.page, this.date, this.pageMax,
       this.statusCode, this.statusMessage);
 
   UpdaterState.v(MyDateTime start)
       : this(0, 0, 1, start, 0, UpdaterStateStatus.initializing, '');
+  factory UpdaterState.read(BinaryReader reader) {
+    final id = reader.readSize();
+    final timestamp = reader.readSize();
+    final page = reader.readSize();
+    final date = DateTime.fromMillisecondsSinceEpoch(
+      reader.readSize() * kMillisecondsInDay,
+      isUtc: true,
+    );
+    final pageMax = reader.readSize();
+    final statusCode = UpdaterStateStatus.values[reader.readSize()];
+    final statusMessage = reader.readString();
+    return UpdaterState(
+      id,
+      timestamp,
+      page,
+      MyDateTime(date, MyDateTimeQuality.day),
+      pageMax,
+      statusCode,
+      statusMessage,
+    );
+  }
 
   final int id;
   int timestamp;
@@ -61,6 +145,16 @@ class UpdaterState {
   @override
   String toString() =>
       '''UpdaterState(id: $id, timestamp: $timestampDt, page: $page, date: $date, pageMax: $pageMax, statusCode: $statusCode, statusMessage: $statusMessage)''';
+
+  @override
+  BinaryWriter write(BinaryWriter writer) => writer
+    ..writeSize(id)
+    ..writeSize(timestamp)
+    ..writeSize(page)
+    ..writeSize(date.dt.millisecondsSinceEpoch ~/ kMillisecondsInDay)
+    ..writeSize(pageMax)
+    ..writeSize(statusCode.index)
+    ..writeString(statusMessage);
 }
 
 enum UpdaterStateStatus {
@@ -83,7 +177,7 @@ class TableDataUpdater extends DatabaseTable<UpdaterData> {
   ];
   static const kColumnsState = <DatabaseColumn>[
     DatabaseColumnId('rowid'),
-    DatabaseColumnTimestamp('timestamp'),
+    kColumnsTimestamp,
     DatabaseColumnUnsigned('page'),
     DatabaseColumnMyDateTime('date'),
     DatabaseColumnUnsigned('pageMax'),
@@ -92,6 +186,8 @@ class TableDataUpdater extends DatabaseTable<UpdaterData> {
   ];
   static const kColumnsStatusCode = DatabaseColumnUnsigned('statusCode');
   DatabaseColumnUnsigned get vColumnsStatusCode => kColumnsStatusCode;
+  static const kColumnsTimestamp = DatabaseColumnTimestamp('timestamp');
+  DatabaseColumnTimestamp get vColumnsTimestamp => kColumnsTimestamp;
 
   @override
   List dartDecode(UpdaterData value) => [

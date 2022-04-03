@@ -9,6 +9,7 @@ import 'i_data_search_struct.dart';
 /// - [O] - тип возвращаемых данных
 /// - [S] - тип данных используемых для поиска
 abstract class IDataProvider<T, O extends T, S extends IDataSearchStruct> {
+  /// For implement only
   IDataProvider._();
 
   /// Возвращает дату последней записи

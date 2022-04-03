@@ -123,16 +123,13 @@ class _WTendersScreenState extends State<WTendersScreen>
       r0.id,
       0,
       MsgDbGetIntervalIdsTenderData(
-        MsgDbIntevalsIdsData.e2(
-            tenders.map((e) => e.rowid).toList(), dd.tenders),
-        MsgDbIntevalsIdsData.e2(
-            companies.map((e) => e.id).toList(), dd.companies),
-        MsgDbIntevalsIdsData.e2(regions.map((e) => e.id).toList(), dd.regions),
-        MsgDbIntevalsIdsData.e2(props.map((e) => e.id).toList(), dd.props),
-        MsgDbIntevalsIdsData.e2(
+        DataIntervalIds.e2(tenders.map((e) => e.rowid).toList(), dd.tenders),
+        DataIntervalIds.e2(companies.map((e) => e.id).toList(), dd.companies),
+        DataIntervalIds.e2(regions.map((e) => e.id).toList(), dd.regions),
+        DataIntervalIds.e2(props.map((e) => e.id).toList(), dd.props),
+        DataIntervalIds.e2(
             regionsRefs.map((e) => e.id).toList(), dd.regionsRefs),
-        MsgDbIntevalsIdsData.e2(
-            propsRefs.map((e) => e.id).toList(), dd.propsRefs),
+        DataIntervalIds.e2(propsRefs.map((e) => e.id).toList(), dd.propsRefs),
       ),
     ));
     if (r1 is! MsgDbGetIntervalResponse) {

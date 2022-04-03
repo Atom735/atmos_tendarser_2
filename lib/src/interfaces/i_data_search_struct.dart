@@ -1,4 +1,5 @@
 abstract class IDataSearchStruct {
+  /// For implement only
   IDataSearchStruct._();
 
   /// Текст поиска

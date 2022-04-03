@@ -5,7 +5,7 @@ import 'package:atmos_binary_buffer/atmos_binary_buffer.dart';
 import 'package:logging/logging.dart';
 
 import '../data/data_tender_db_etpgpb.dart';
-import '../database/database_app_server.dart';
+import '../database/server/database_app_server.dart';
 import '../interfaces/i_msg.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_web_client.dart';
@@ -36,7 +36,7 @@ class BackendApp {
     db.updateUpdaterStates(updater.state);
   }
 
-  void spawnNewUpdater(DateTime start, DateTime end) {
+  void spawnNewEtpGpbUpdater(DateTime start, DateTime end) {
     final res =
         UpdaterEtpGpb(webClient, db, db.createNewUpdaterEtpGpb(start, end))
           ..updates.listen(_updaterStateUpdate)
@@ -129,12 +129,12 @@ class BackendApp {
               msg.id,
               0,
               MsgDbGetIntervalIdsTenderData(
-                MsgDbIntevalsIdsData.e1(idsTender),
-                MsgDbIntevalsIdsData.e1(companies.map((e) => e.id).toList()),
-                MsgDbIntevalsIdsData.e1(regions.map((e) => e.id).toList()),
-                MsgDbIntevalsIdsData.e1(props.map((e) => e.id).toList()),
-                MsgDbIntevalsIdsData.e1(regionsRefs.map((e) => e.id).toList()),
-                MsgDbIntevalsIdsData.e1(propsRefs.map((e) => e.id).toList()),
+                DataIntervalIds.e1(idsTender),
+                DataIntervalIds.e1(companies.map((e) => e.id).toList()),
+                DataIntervalIds.e1(regions.map((e) => e.id).toList()),
+                DataIntervalIds.e1(props.map((e) => e.id).toList()),
+                DataIntervalIds.e1(regionsRefs.map((e) => e.id).toList()),
+                DataIntervalIds.e1(propsRefs.map((e) => e.id).toList()),
               ),
             );
             final r = await connection.request(rMsg);

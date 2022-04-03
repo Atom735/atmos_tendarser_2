@@ -5,6 +5,7 @@ import '../common/common_web_constants.dart';
 import 'i_fetching_params.dart';
 
 abstract class IFetchedData {
+  /// For implement only
   IFetchedData._();
 
   /// Параметры запроса связанные с этим ответом.

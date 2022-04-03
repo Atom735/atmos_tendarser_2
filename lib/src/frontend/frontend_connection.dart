@@ -9,7 +9,7 @@ import '../messages/msg_handshake.dart';
 
 class FrontendMsgConnection extends CommonMsgConnection
     implements IMsgConnectionClient {
-  FrontendMsgConnection();
+  FrontendMsgConnection(this.version);
 
   @override
   late String remoteAdress;
@@ -22,6 +22,8 @@ class FrontendMsgConnection extends CommonMsgConnection
 
   @override
   late Socket ws;
+
+  final int version;
 
   int remoteVersion = 1;
 
@@ -58,8 +60,11 @@ class FrontendMsgConnection extends CommonMsgConnection
       ws = await Socket.connect(remoteAdress, remotePort);
       logger.info('connected');
       ws.listen(handleDataRaw, onDone: handleDone, onError: handleError);
-      final v = await request(MsgHandshake(mewMsgId, 1));
-      remoteVersion = (v as MsgHandshake).version;
+      final respMsg = await request(MsgHandshake(mewMsgId, version));
+      if (respMsg is! MsgHandshake) {
+        throw Exception('Unknown message responsed from handshake');
+      }
+      remoteVersion = respMsg.version;
       logger.info('handshaked');
       _status(ConnectionStatus.connected);
     } on Object catch (e) {

@@ -15,14 +15,14 @@ class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
         PopNavigatorRouterDelegateMixin
     implements
         IRouter {
-  MyRouterDelegate(this.app) {
-    app.connection.statusUpdates.listen((event) => notifyListeners());
+  MyRouterDelegate(this.connection) {
+    connection.statusUpdates.listen((event) => notifyListeners());
   }
 
   static MyRouterDelegate of(BuildContext context) =>
       Router.of(context).routerDelegate as MyRouterDelegate;
 
-  final FrontendApp app;
+  final IMsgConnectionClient connection;
 
   @override
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -38,7 +38,7 @@ class MyRouterDelegate extends RouterDelegate<CommonRouteInfo>
     Widget result = Navigator(
       key: navigatorKey,
       pages: initialized
-          ? app.connection.statusCode == ConnectionStatus.connected
+          ? connection.statusCode == ConnectionStatus.connected
               ? routeStack.toList()
               : const [MaterialPage(child: WConnectingScreen())]
           : const [MaterialPage(child: WInitializingScreen())],

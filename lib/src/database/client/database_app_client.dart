@@ -1,4 +1,4 @@
-import 'database_app.dart';
+import '../database_app.dart';
 
 class DatabaseAppClient extends DatabaseApp {
   DatabaseAppClient(String fname) : super(fname);

@@ -2,6 +2,7 @@ import '../common/common_stop_watch_ticks.dart';
 import 'i_fetched_data.dart';
 
 abstract class IParsedData<T> {
+  /// For implement only
   IParsedData._();
 
   /// Полученные данные свзяанные с этими разобранными данными

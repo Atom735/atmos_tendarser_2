@@ -1,35 +1,28 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
-import 'package:yaml/yaml.dart';
 
-import '../database/database_app_client.dart';
+import '../database/client/database_app_client.dart';
 import '../interfaces/i_msg_connection.dart';
 import '../interfaces/i_router.dart';
 import '../routes/router_delegate.dart';
 import 'frontend_app_logger.dart';
 import 'frontend_app_settings.dart';
-import 'frontend_app_tender_list.dart';
-import 'frontend_app_updates_list.dart';
 import 'frontend_connection.dart';
 
 /// Интерфейс клиентского приложения
 class FrontendApp {
-  FrontendApp() {}
-
   /// Версия приложения
   int get version => 1;
 
   final db = DatabaseAppClient('frontend.db');
   final settings = FrontendAppSettings();
-  late final IMsgConnectionClient connection = FrontendMsgConnection();
-  late final IRouter router = MyRouterDelegate(this);
+  late final IMsgConnectionClient connection = FrontendMsgConnection(version);
+  late final MyRouterDelegate router = MyRouterDelegate(connection);
   final Logger logger = Logger('app');
 
   bool get isOnline => connection.statusCode == ConnectionStatus.connected;
+  bool get noCache => settings.vnNoCache.value;
 
   void run(List<String> args) {
     frontendAppLoggerAttach();
@@ -40,7 +33,7 @@ class FrontendApp {
       settings.vnServerPort.value,
     );
     logger.info('Initialized');
-    (router as MyRouterDelegate).handleInitizlizngEnd();
+    router.handleInitizlizngEnd();
   }
 
   void onConnected(IMsgConnectionClient connection) {
@@ -50,7 +43,7 @@ class FrontendApp {
   Future<void> dispose() async {
     settings.dispose();
     connection.dispose();
-    (router as MyRouterDelegate).dispose();
+    router.dispose();
     db.dispose();
     logger.info('Disposed');
     frontendAppLoggerClose();

@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+const kMillisecondsInDay = 1000 * 60 * 60 * 24;
+
 void kVoidFunc() {}
 
 int searchSublistBytes(

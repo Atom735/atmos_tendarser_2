@@ -22,8 +22,17 @@ class FrontendAppSettings {
   final vnThemeMode = ValueNotifier<ThemeMode>(ThemeMode.system);
   final vnServerAdress = ValueNotifier<String>('localhost');
   final vnServerPort = ValueNotifier<int>(kServerPortDefault);
+  final vnWorkInOffline = ValueNotifier<bool>(false);
+  final vnNoCache = ValueNotifier<bool>(false);
+  List<ValueNotifier> get vns => [
+        vnServerAdress,
+        vnServerPort,
+        vnThemeMode,
+        vnWorkInOffline,
+        vnNoCache,
+      ];
+
   bool _fileChangedProc = false;
-  List<ValueNotifier> get vns => [vnServerAdress, vnServerPort, vnThemeMode];
 
   void _onChanged() {
     if (_fileChangedProc) return;
@@ -31,6 +40,8 @@ class FrontendAppSettings {
 server_adress: '${vnServerAdress.value}'
 server_port: ${vnServerPort.value}
 theme_mode: '${vnThemeMode.value.name}'
+work_in_offline: ${vnWorkInOffline.value}
+no_cache: ${vnNoCache.value}
 ''');
   }
 
@@ -53,6 +64,20 @@ theme_mode: '${vnThemeMode.value.name}'
           break;
         default:
           vnThemeMode.value = ThemeMode.system;
+      }
+      switch (yaml['work_in_offline']) {
+        case 'true':
+          vnWorkInOffline.value = true;
+          break;
+        default:
+          vnWorkInOffline.value = false;
+      }
+      switch (yaml['no_cache']) {
+        case 'true':
+          vnWorkInOffline.value = true;
+          break;
+        default:
+          vnWorkInOffline.value = false;
       }
     } on Object catch (e, st) {
       logger.severe('Exception on file settings changed', e, st);

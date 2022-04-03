@@ -1,6 +1,9 @@
 import '../routes/route_info.dart';
 
 abstract class IRouter {
+  /// For implement only
+  IRouter._();
+
   /// Открыть новый роут
   void openRoute(CommonRouteInfo route);
 

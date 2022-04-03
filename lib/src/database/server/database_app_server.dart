@@ -3,11 +3,11 @@ import 'dart:developer';
 
 import 'package:atmos_database/atmos_database.dart';
 
-import '../common/common_date_time.dart';
-import '../data/data_tender_db_etpgpb.dart';
-import '../data/tender_data_etpgpb.dart';
-import '../data/updater_data.dart';
-import 'database_app.dart';
+import '../../common/common_date_time.dart';
+import '../../data/data_tender_db_etpgpb.dart';
+import '../../data/tender_data_etpgpb.dart';
+import '../../data/updater_data.dart';
+import '../database_app.dart';
 
 class DatabaseAppServer extends DatabaseApp {
   DatabaseAppServer(String fname) : super(fname);
@@ -99,9 +99,6 @@ class DatabaseAppServer extends DatabaseApp {
             }
             if ({'end'}.containsAll(diffs)) {
               continue;
-              if (coreThis.end.quality == MyDateTimeQuality.unknown) {}
-              debugger();
-              throw Exception();
             }
             debugger();
             throw Exception();
@@ -161,6 +158,7 @@ class DatabaseAppServer extends DatabaseApp {
     return 0;
   }
 
+  /// Создаеёт запись нового апдейтера
   UpdaterData createNewUpdaterEtpGpb(DateTime start, DateTime end) {
     tableUpdaters.sqlInsert([
       UpdaterData.v(
@@ -172,6 +170,7 @@ class DatabaseAppServer extends DatabaseApp {
     return tableUpdaters.sqlSelectByIds([rowid]).first;
   }
 
+  /// Получает записи активных апдейтеров
   Iterable<UpdaterData> getActiveUpdaters() => tableUpdaters.sqlSelect('''
       WHERE ${tableUpdaters.vColumnsStatusCode.name}
       IN (
